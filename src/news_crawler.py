@@ -1,7 +1,4 @@
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium import webdriver
 from bs4 import BeautifulSoup
 import utility_module as util
 import pandas as pd
@@ -140,32 +137,3 @@ def get_news_text(keyword):
         util.create_folder(f'./{keyword}/content')
         util.save_file(df_content, f'./{keyword}/content', file_name=content_file_name)
         print(f"[종료] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들었습니다")
-
-
-# 크롤링한 url 데이터를 csv로 만든다
-# 입력값 : ['date', 'url'] 형식의 2차원 리스트
-def save_url_file(keyword, year, data_list):
-    folder_path = f'./{keyword}/url'
-    util.create_folder(folder_path)
-    # 크롤링 데이터 확인
-    print(f'{year}년 data_list의 길이 : ', len(data_list))
-    columns = ['date', 'url']  # 열 이름
-    df = pd.DataFrame(data_list, columns=columns)  # DataFrame 생성
-    print(df.tail())  # 결과 확인
-    file_path = os.path.join(folder_path, f"{keyword}_{year}_url.csv")
-    df.to_csv(file_path, encoding='utf-8', index=False)
-
-
-def get_driver(url):
-    options = webdriver.ChromeOptions()
-    options.add_argument('headless')  # 창이 없이 크롬이 실행이 되도록 만든다
-    # options.add_argument("--start-maximized")  # 창이 최대화 되도록 열리게 한다.
-    options.add_argument("disable-infobars")  # 안내바가 없이 열리게 한다.
-    options.add_argument('--disable-dev-shm-usage')  # 공유메모리를 사용하지 않는다
-    options.add_argument("disable-gpu")  # 크롤링 실행시 GPU를 사용하지 않게 한다.
-    options.add_argument("--disable-extensions")  # 확장팩을 사용하지 않는다.
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-    # site에 접근하기 위해 get메소드에 이동할 URL을 입력한다.
-    driver.get(url)
-    return driver
