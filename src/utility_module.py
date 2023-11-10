@@ -1,39 +1,17 @@
-import pandas as pd
-import os
-import re
-import time
 from datetime import datetime
 from calendar import monthrange
-
-
-######################################
-# 입력 : 2000.01.01 형식을 입력받아서
-# return : 그 달의 마지막 날짜를 리턴
-def get_last_date(date_string):
-    date_format = "%Y.%m.%d"    # 날짜 형식 (예: 2023.01.01)
-    date_object = datetime.strptime(date_string, date_format)
-    _, last_day = monthrange(date_object.year, date_object.month)
-    return f"{date_object.year}.{date_object.month:02d}.{last_day:02d}"
-
-
-####################################
-def make_date_range(year, month):
-    last_date = get_last_date(f'{year}.{month}.01')
-    date_list = []
-    for day in range(1, 30, 3):
-        day_to = day + 2
-        if day == 28:
-            day_to = int(last_date[-2:])
-        date_list.append([f'{year}.{month}.{day:02d}', f'{year}.{month}.{day_to:02d}'])
-    return date_list
+import pandas as pd
+import time
+import os
+import re
 
 
 ##########################################
 # 기능 : 한글 문자열을 유니코드 UTF-8로 인코딩하여 반환합니다
-# 입력 예시 : '에스엠'
-# 리턴값 예시 : '.EC.97.90.EC.8A.A4.EC.97.A0'
+# 입력 예시 : '금리'
+# 리턴값 예시 : '%EA%B8%88%EB%A6%AC'
 def convert_to_unicode(input_str):
-    return '.' + '.'.join(['{:02X}'.format(byte) for byte in input_str.encode('utf-8')])
+    return '%' + '%'.join(['{:02X}'.format(byte) for byte in input_str.encode('utf-8')])
 
 
 #########################################################################################################
@@ -61,7 +39,6 @@ def remove_stopword(keyword):
 
     save_file(df, folder_path, f'{keyword}_content_tokenized_removed_stopwords.csv')
     print(f'{keyword}_removed_stopwords.csv 파일을 저장했습니다')
-
 
 
 #####################################
@@ -114,7 +91,8 @@ def read_files(folder_path_='./', keyword=None, endswith='.csv'):
 #####################################
 # merge_csv_files()
 # 기능 : .csv 파일들을 하나로 합친다
-def merge_csv_files(save_file_name, read_folder_path_='./', save_folder_path_='./', keyword=None, subset=None, read_file_encoding='utf-8', save_file_encoding='utf-8'):
+def merge_csv_files(save_file_name, read_folder_path_='./', save_folder_path_='./', keyword=None, subset=None,
+                    read_file_encoding='utf-8', save_file_encoding='utf-8'):
     create_folder(save_folder_path_)
     start_time = datetime.now().replace(microsecond=0)
     str_start_time = str(start_time)[2:10].replace("-", "") + "_" + str(start_time)[11:].replace(":", "")
