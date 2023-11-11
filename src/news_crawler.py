@@ -5,80 +5,78 @@ import pandas as pd
 import requests
 import os
 import time
+import crawling_tool as cr
 
 
-def get_news_url(keyword, year_start, year_end):
-    folder_path = f"./{keyword}"
-    util.create_folder(folder_path)
-    year_list = [str(y) for y in range(year_start, year_end + 1)]
-    month_list = [f"{m:02d}" for m in range(1, 12 + 1)]
-    for year in year_list:
-        data_list = []  # 크롤링 데이터 저장 [’date’, ’url’]
-        error_log = []  # 에러 로그 저장 [’date’, ’error’]
-        for month in month_list:
-            temp_ds = f'{year}.{month}.01'  # date start
-            temp_de = util.get_last_date(temp_ds)  # date end
-            last_day = int(temp_de[-2:])
-            for day in range(1, last_day + 1):  # day : 1~last day
-                date = f'{year}.{month}.{day:02d}'
-                print(f'{keyword} : {date}의 크롤링 진행')
-                try:
-                    date_nodot = date.replace('.', '')  # "." 지운거
-                    search_url = f'https://search.naver.com/search.naver?where=news&sm=tab_pge&query={keyword}&sort=2&photo=0&field=0&pd=3&ds={date}&de={date}&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:dd,p:from{date_nodot}to{date_nodot}'
-                    driver = get_driver(search_url)
-                except Exception as e:
-                    print('[driver 오류] ', e)
-                    error_log.append([date, e])
-                    time.sleep(1)
-                    continue
-                # url 크롤링
-                for page in range(1, 100+1):
-                    print('현재 페이지 : ', page)
-                    if page == 100:
-                        error_message = f"page 한계치에 도달했습니다 (page : {page})"
-                        print(error_message)
-                        error_log.append([date, error_message])
-                        break
-                    html = driver.page_source
-                    soup = BeautifulSoup(html, 'html.parser')
-                    # 페이지의 데이터 받아오기 : data_list 에 추가
-                    try:
-                        soup_list = soup.select("ul.list_news div.info_group")  # 여기 수정
-                        for element in soup_list:
-                            date = element.select('span.info')[-1].get_text(strip=True)
-                            a_tags = element.find_all('a')
-                            if len(a_tags) == 2:
-                                url = a_tags[1]['href']
-                                new_row = [date, url]
-                                data_list.append(new_row)
-                                print(f'{keyword} {len(data_list)}번째 row : {new_row}')
-                            else:
-                                continue
+####################################################
+# get_news_url()
+# 기능 : keyword로 검색한 결과 뉴스의 url을 저장하는 함수
+# 입력값 : keyword (검색어, 문자열), start_date (검색 시작 날짜, 문자열), end_date (검색 종료 날짜, 문자열)
+def get_news_url(keyword, start_date, end_date):
+    date_list = cr.generate_date_list(start_date, end_date)
+    keyword_unicode = util.convert_to_unicode(keyword)
+    # [1. url 크롤링 : 하루 단위로]
+    for date in date_list:
+        print(f'{keyword} : {date}의 크롤링 진행')
+        try:
+            date_having_dots = date.replace('-', '.')  # 2023.11.10 형식
+            date_no_dots = date.replace('-', '')     # 20231110 형식
+            search_url = f"https://search.naver.com/search.naver?where=news&query={keyword_unicode}&sm=tab_opt&sort=2&photo=0&field=0&pd=3&ds={date_having_dots}&de={date_having_dots}&docid=&related=0&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so%3Ar%2Cp%3Afrom{date_no_dots}to{date_no_dots}&is_sug_officeid=0&office_category=0&service_area=0"
 
-                    except Exception as e:
-                        print('[bs4 데이터 받아오기 오류] ', e)
-                        error_log.append([date, e])
-                        break
+            driver = get_driver(search_url)
+        except Exception as e:
+            print('[driver 오류] ', e)
+            error_log.append([date, e])
+            time.sleep(1)
+            continue
+        # url 크롤링
+        for page in range(1, 100+1):
+            print('현재 페이지 : ', page)
+            if page == 100:
+                error_message = f"page 한계치에 도달했습니다 (page : {page})"
+                print(error_message)
+                error_log.append([date, error_message])
+                break
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            # 페이지의 데이터 받아오기 : data_list 에 추가
+            try:
+                soup_list = soup.select("ul.list_news div.info_group")  # 여기 수정
+                for element in soup_list:
+                    date = element.select('span.info')[-1].get_text(strip=True)
+                    a_tags = element.find_all('a')
+                    if len(a_tags) == 2:
+                        url = a_tags[1]['href']
+                        new_row = [date, url]
+                        data_list.append(new_row)
+                        print(f'{keyword} {len(data_list)}번째 row : {new_row}')
+                    else:
+                        continue
 
-                    # 페이지 이동
-                    try:
-                        next_page_button = driver.find_element(By.XPATH,
-                                                               '//*[@id="main_pack"]/div[2]/div/a[2]')  # [>] 모양 버튼, 다음페이지로 이동한다
-                        if next_page_button.get_attribute("aria-disabled") == "true":
-                            # 다음 페이지가 없으면
-                            print(f'{date} : 다음 페이지가 존재하지 않습니다. 크롤링을 종료합니다')
-                            break
-                        elif next_page_button.get_attribute("aria-disabled") == "false":
-                            print('다음 페이지로 이동합니다')
-                            next_page_button.click()  # 다음 페이지로 이동
-                        else:
-                            print('[페이지 이동 에러] else')
-                            break
-                    except Exception as e:
-                        print('[페이지 이동 에러] ', e)
-                        error_log.append([date, e])
-                        time.sleep(1)
-                        break
+            except Exception as e:
+                print('[bs4 데이터 받아오기 오류] ', e)
+                error_log.append([date, e])
+                break
+
+            # 페이지 이동
+            try:
+                next_page_button = driver.find_element(By.XPATH,
+                                                       '//*[@id="main_pack"]/div[2]/div/a[2]')  # [>] 모양 버튼, 다음페이지로 이동한다
+                if next_page_button.get_attribute("aria-disabled") == "true":
+                    # 다음 페이지가 없으면
+                    print(f'{date} : 다음 페이지가 존재하지 않습니다. 크롤링을 종료합니다')
+                    break
+                elif next_page_button.get_attribute("aria-disabled") == "false":
+                    print('다음 페이지로 이동합니다')
+                    next_page_button.click()  # 다음 페이지로 이동
+                else:
+                    print('[페이지 이동 에러] else')
+                    break
+            except Exception as e:
+                print('[페이지 이동 에러] ', e)
+                error_log.append([date, e])
+                time.sleep(1)
+                break
 
         save_url_file(keyword, year, data_list)     # 1년 단위 데이터 csv로 만든다
 

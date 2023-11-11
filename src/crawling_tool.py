@@ -1,23 +1,17 @@
+from datetime import datetime, timedelta
 from selenium import webdriver
 import utility_module as util
 import pandas as pd
 import os
 
 
-# 크롤링한 url 데이터를 csv로 만든다
-# 입력값 : ['date', 'url'] 형식의 2차원 리스트
-def save_url_file(keyword, year, data_list):
-    folder_path = f'./{keyword}/url'
-    util.create_folder(folder_path)
-    # 크롤링 데이터 확인
-    print(f'{year}년 data_list의 길이 : ', len(data_list))
-    columns = ['date', 'url']  # 열 이름
-    df = pd.DataFrame(data_list, columns=columns)  # DataFrame 생성
-    print(df.tail())  # 결과 확인
-    file_path = os.path.join(folder_path, f"{keyword}_{year}_url.csv")
-    df.to_csv(file_path, encoding='utf-8', index=False)
-
-
+###############################################################################
+#                                 << 함수들 >>                                 #
+###############################################################################
+# get_driver()
+# 사용 전제 조건 : Users 폴더에 버전에 맞는 chromedriver.exe를 다운받아주세요
+# 기능 : driver를 반환합니다
+# 리턴값 : driver
 def get_driver():
     CHROME_DRIVER_PATH = "C:/Users/chromedriver.exe"    # (절대경로) Users 폴더에 chromedriver.exe를 설치했음
     options = webdriver.ChromeOptions()                 # 옵션 선언
@@ -37,3 +31,21 @@ def get_driver():
     options.add_argument('--disable-sync')          # 다양한 플러그인 및 기능 비활성화
     driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
     return driver
+
+
+#############################################################################
+# generate_date_list()
+# 기능 : 시작 날짜와 종료 날짜를 포함하여 두 날짜 사이의 모든 날짜를 문자열 리스트로 반환한다
+# [param] start_date: 시작 날짜 (YYYY-MM-DD 형식)
+# [param] end_date: 종료 날짜 (YYYY-MM-DD 형식)
+# [return] 두 날짜 사이의 날짜를 포함한 문자열 리스트
+def generate_date_list(start_date, end_date):
+    start = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    date_list = []
+
+    while start <= end:
+        date_list.append(start.strftime("%Y-%m-%d"))
+        start += timedelta(days=1)
+
+    return date_list
