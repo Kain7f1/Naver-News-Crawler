@@ -5,20 +5,13 @@ import pandas as pd
 import os
 
 
-# 크롤링한 url 데이터를 csv로 만든다
-# 입력값 : ['date', 'url'] 형식의 2차원 리스트
-def save_url_file(keyword, year, data_list):
-    folder_path = f'./{keyword}/url'
-    util.create_folder(folder_path)
-    # 크롤링 데이터 확인
-    print(f'{year}년 data_list의 길이 : ', len(data_list))
-    columns = ['date', 'url']  # 열 이름
-    df = pd.DataFrame(data_list, columns=columns)  # DataFrame 생성
-    print(df.tail())  # 결과 확인
-    file_path = os.path.join(folder_path, f"{keyword}_{year}_url.csv")
-    df.to_csv(file_path, encoding='utf-8', index=False)
-
-
+###############################################################################
+#                                 << 함수들 >>                                 #
+###############################################################################
+# get_driver()
+# 사용 전제 조건 : Users 폴더에 버전에 맞는 chromedriver.exe를 다운받아주세요
+# 기능 : driver를 반환합니다
+# 리턴값 : driver
 def get_driver():
     CHROME_DRIVER_PATH = "C:/Users/chromedriver.exe"    # (절대경로) Users 폴더에 chromedriver.exe를 설치했음
     options = webdriver.ChromeOptions()                 # 옵션 선언
