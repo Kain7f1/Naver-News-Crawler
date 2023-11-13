@@ -1,15 +1,17 @@
-from news_crawler import get_news_url, get_news_text
+from news_crawler import crawl_url, crawl_text
 import utility_module as util
 ####################################################################################################
 #                                             << 설정값 >>
-keyword = "이"
-start_date = "2021-01-01"
+keyword = "구리시"
+start_date = "2023-11-09"
 end_date = "2023-11-10"
 
 ####################################################################################################
 #                                           << 실행하는 곳 >>
-# get_news_url(keyword, start_date, end_date)
-# get_news_text(keyword)
+crawl_url(keyword, start_date, end_date)
+# crawl_text(keyword)
+
+
 
 
 ##########################################

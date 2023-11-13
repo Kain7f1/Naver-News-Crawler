@@ -8,6 +8,7 @@ import time
 import re
 import os
 
+from selenium.webdriver.common.by import By
 
 #############################################################################
 #                                 << 설정값 >>
@@ -81,31 +82,108 @@ def get_soup(url, time_sleep=0, max_retries=600):
     return soup
 
 
-#############################
+###################################################################
 # is_no_result()
 # 기능 : 검색 결과가 존재하는지 체크한다
 # [param] get_soup() 으로 얻은 soup
 # [return] 결과가 없으면 True, 결과가 있으면 False
 def is_no_result(soup):
     try:
-        no_result = soup.select_one('div.api_noresult_wrap')
-        if no_result is None:
-            print("검색 결과가 존재합니다")
-            return False
-        else:
-            print("검색 결과가 존재하지 않습니다")
+        bx_list = soup.select("ul.list_news li.bx")
+        print("len_bx_list : ", len(bx_list))
+        if len(bx_list) == 0:
+            print("[검색 결과가 존재하지 않습니다] 1")
             return True
+        else:
+            return False
     except Exception as e:
-        print("검색 결과가 존재합니다", e)
-        return False
+        print("[검색 결과가 존재하지 않습니다] 2", e)
+        return True
+
+    # try:
+    #     no_result = soup.select_one('div.not_found02')
+    #     # print("no_result : ", no_result)
+    #     if no_result is None:
+    #         print("검색 결과가 존재합니다")
+    #         return False
+    #     else:
+    #         print("검색 결과가 존재하지 않습니다")
+    #         return True
+    # except Exception as e:
+    #     print("검색 결과가 존재합니다", e)
+    #     return False
 
 
-#############################
-# is_exist_next_page()
-# 기능 : 다음 페이지가 존재하는지 체크한다
-# [param] get_soup() 으로 얻은 soup
-# [return] 다음 페이지가 있으면 True, 없으면 False
-def is_exist_next_page(soup):
-    a = soup.select_one('div.sc_page_inner')
-    # a = soup.select_one('section.sc_new')
-    print(a)
+##################################################################
+# get_naver_news_url()
+# 기능 : 네이버뉴스이면, url을 받아온다
+# [param] 기사 1개의 soup_box
+# [return] 네이버뉴스이면 url, 네이버뉴스가 아니면 None
+def get_naver_news_url(soup_box):
+    try:
+        a_list = soup_box.select('div.info_group a')
+        if len(a_list) != 2:    # "네이버뉴스" 버튼이 있으면, a_list의 길이가 2이다.
+            print("네이버뉴스가 아닙니다")
+            return None
+        else:
+            url = a_list[1]["href"]
+            print(f"url : {url}")
+            print("네이버뉴스 입니다")
+            return url
+    except Exception as e:
+        print("네이버뉴스가 아닙니다", e)
+        return None
+
+
+def is_exist_next_page(url, time_sleep=0, max_retries=2):
+    try:
+        if max_retries <= 0:
+
+            return False
+        driver = get_driver()
+        driver.get(url)
+        next_page_button = driver.find_element(By.XPATH,
+                                               '//*[@id="main_pack"]/div[2]/div/a[2]')  # [>] 모양 버튼, 다음페이지로 이동한다
+        if next_page_button.get_attribute("aria-disabled") == "true":
+            # 다음 페이지가 없으면
+            print('[다음 페이지가 존재하지 않습니다]')
+            return False
+        elif next_page_button.get_attribute("aria-disabled") == "false":
+            print('[다음 페이지가 존재합니다]')
+            return True
+        else:
+            print('[에러에러]')
+            return False
+    except Exception as e:
+        print(f"[오류] is_exist_next_page(time_sleep={time_sleep}) ", e)
+        is_exist = is_exist_next_page(url, time_sleep+1, max_retries-1)
+        return is_exist
+
+##################################################################
+# get_url_row()
+# 기능 : url크롤러에서 크롤링한 결과를 row로 만들어 반환한다.
+# [param 1] 검색결과 soup
+# [param 2] 뉴스 검색 날짜 (뉴스가 만들어진 날짜)
+# [return 1] is_break : for문을 멈추고 크롤링 종료할거면 True, 아니면 False
+# [return 2] row : 크롤링한 결과 row의 리스트
+def get_url_rows(soup, keyword, date):
+    is_break = False
+    rows = []
+    # [결과가 존재하지 않으면 종료]
+    if is_no_result(soup):
+        print("결과가없어용 ")
+        is_break = True
+        return is_break, rows
+
+    soup_box_list = soup.select("ul.list_news li.bx")  # 뉴스 box 리스트
+
+    for soup_box in soup_box_list:
+        url = get_naver_news_url(soup_box)
+        if url is None:
+            continue    # [네이버뉴스가 아니면, 스킵]
+        new_row = [keyword, date, url]
+        rows.append(new_row)
+
+    return is_break, rows
+
+
