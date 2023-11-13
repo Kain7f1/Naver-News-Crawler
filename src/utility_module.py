@@ -252,3 +252,21 @@ def delete_rows(delete_keyword, column='text', folder_path="./target"):
         print(f"{len_diff} 개의 row가 삭제되었습니다. delete_keyword = {delete_keyword}")
         df_new.to_csv(f"{result_folder_path}/deleted_rows_{file}", encoding="utf-8", index=False)  # 파일로 저장
         print(f"{len_df_after} 개의 row가 파일로 저장되었습니다")
+
+
+#############################################################################
+# generate_date_list()
+# 기능 : 시작 날짜와 종료 날짜를 포함하여 두 날짜 사이의 모든 날짜를 문자열 리스트로 반환한다
+# [param] start_date: 시작 날짜 (YYYY-MM-DD 형식)
+# [param] end_date: 종료 날짜 (YYYY-MM-DD 형식)
+# [return] 두 날짜 사이의 날짜를 포함한 문자열 리스트
+def generate_date_list(start_date, end_date):
+    start = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    date_list = []
+
+    while start <= end:
+        date_list.append(start.strftime("%Y-%m-%d"))
+        start += timedelta(days=1)
+
+    return date_list
