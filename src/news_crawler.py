@@ -27,19 +27,20 @@ def crawl_url(search_keyword, start_date, end_date):
         for index in range(0, maximum_page):
             page = 1 + (index * 10)
             search_url = f"https://search.naver.com/search.naver?where=news&sm=tab_pge&query={keyword_unicode}&sort=2&photo=0&field=0&pd=3&ds={date_having_dots}&de={date_having_dots}&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from{date_no_dots}to{date_no_dots},a:all&start={page}"
+            print(f"{search_keyword} / {date} / page {page} ~ {page+9} / {search_url}")
+
             soup = cr.get_soup(search_url)
+            rows = cr.get_url_rows(soup, search_keyword, date)   # 크롤링 결과를 받아온다
 
-            is_break, rows = cr.get_url_rows(soup, search_keyword, date)   # 크롤링 결과를 받아온다
-            if is_break:
-                print(f"{page} / roof 1 / {search_url}")
-                break
-            else:
-                print(f"{page} / roof 2 / {search_url}")
-                for new_row in rows:
-                    row_list.append(new_row)
-        for index, row in enumerate(row_list):
-            print(index, row)
+            for new_row in rows:
+                row_list.append(new_row)    # 크롤링 결과 저장
 
+            if cr.is_not_exist_next_page(search_url):
+                break   # 다음페이지가 없으면 다음 날짜로 넘어감
+
+    # 결과 출력
+    for index, row in enumerate(row_list):
+        print(index, row)
 
 
 
