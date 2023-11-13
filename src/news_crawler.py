@@ -13,7 +13,7 @@ import crawling_tool as cr
 # 기능 : keyword로 검색한 결과 뉴스의 url을 저장하는 함수
 # 입력값 : keyword (검색어, 문자열), start_date (검색 시작 날짜, 문자열), end_date (검색 종료 날짜, 문자열)
 def get_news_url(keyword, start_date, end_date):
-    date_list = cr.generate_date_list(start_date, end_date)
+    date_list = util.generate_date_list(start_date, end_date)
     keyword_unicode = util.convert_to_unicode(keyword)
     # [1. url 크롤링 : 하루 단위로]
     for date in date_list:

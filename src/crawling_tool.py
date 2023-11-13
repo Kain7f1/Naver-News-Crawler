@@ -1,8 +1,34 @@
 from datetime import datetime, timedelta
 from selenium import webdriver
+from bs4 import BeautifulSoup
 import utility_module as util
 import pandas as pd
+import requests
+import time
+import re
 import os
+
+
+#############################################################################
+#                                 << 설정값 >>
+# dcinside 헤더 :  dcinside 봇 차단을 위한 헤더 설정
+headers_naver = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+        "Connection": "keep-alive",
+        "Cache-Control": "max-age=0",
+        "sec-ch-ua-mobile": "?0",
+        "DNT": "1",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-User": "?1",
+        "Sec-Fetch-Dest": "document",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko-KR,ko;q=0.9"
+    }
+
+# 목적에 맞는 헤더를 설정한다
+headers = headers_naver
 
 
 ###############################################################################
@@ -34,18 +60,52 @@ def get_driver():
 
 
 #############################################################################
-# generate_date_list()
-# 기능 : 시작 날짜와 종료 날짜를 포함하여 두 날짜 사이의 모든 날짜를 문자열 리스트로 반환한다
-# [param] start_date: 시작 날짜 (YYYY-MM-DD 형식)
-# [param] end_date: 종료 날짜 (YYYY-MM-DD 형식)
-# [return] 두 날짜 사이의 날짜를 포함한 문자열 리스트
-def generate_date_list(start_date, end_date):
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
-    date_list = []
+# get_soup()
+# 기능 : url을 받아 requests를 사용하여 soup를 리턴하는 함수입니다
+# 특징 : 오류발생 시 재귀하기 때문에, 성공적으로 soup를 받아올 수 있습니다.
+def get_soup(url, time_sleep=0, max_retries=600):
+    try:
+        if max_retries <= 0:
+            print("[최대 재시도 횟수 초과 : get_soup()]")
+            return None
+        with requests.Session() as session:
+            response = session.get(url, headers=headers)
+            time.sleep(time_sleep)
+        soup = BeautifulSoup(response.text, "html.parser")
+        if len(soup) == 0:  # 불러오는데 실패하면
+            print(f"[soup 로딩 실패, 반복] [get_soup(time_sleep=1)]")
+            soup = get_soup(url, 1)
+    except Exception as e:
+        print(f"[오류 발생, 반복] [get_soup(time_sleep=1)] ", e)
+        soup = get_soup(url, 1, max_retries-1)
+    return soup
 
-    while start <= end:
-        date_list.append(start.strftime("%Y-%m-%d"))
-        start += timedelta(days=1)
 
-    return date_list
+#############################
+# is_no_result()
+# 기능 : 검색 결과가 존재하는지 체크한다
+# [param] get_soup() 으로 얻은 soup
+# [return] 결과가 없으면 True, 결과가 있으면 False
+def is_no_result(soup):
+    try:
+        no_result = soup.select_one('div.api_noresult_wrap')
+        if no_result is None:
+            print("검색 결과가 존재합니다")
+            return False
+        else:
+            print("검색 결과가 존재하지 않습니다")
+            return True
+    except Exception as e:
+        print("검색 결과가 존재합니다", e)
+        return False
+
+
+#############################
+# is_exist_next_page()
+# 기능 : 다음 페이지가 존재하는지 체크한다
+# [param] get_soup() 으로 얻은 soup
+# [return] 다음 페이지가 있으면 True, 없으면 False
+def is_exist_next_page(soup):
+    a = soup.select_one('div.sc_page_inner')
+    # a = soup.select_one('section.sc_new')
+    print(a)
