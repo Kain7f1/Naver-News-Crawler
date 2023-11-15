@@ -72,10 +72,10 @@ def create_folder(folder_path_='./'):
 # read_files()
 # 입력값 : folder_path_, endswith (파일이름의 검색조건 : 파일명의 끝)
 # 기능 : 폴더 내의 파일들 이름을 읽어서, 파일 이름들 리스트를 가져오는 함수
-def read_files(folder_path_='./', keyword=None, endswith='.csv'):
+def read_files(folder_path='./', keyword=None, endswith='.csv'):
     file_list = []
-    print(f"[{folder_path_} 내의 파일을 탐색합니다. 검색조건 : endswith={endswith}]")
-    for target_file in os.listdir(folder_path_):      # 폴더 내의 모든 파일을 검색한다
+    print(f"[{folder_path} 내의 파일을 탐색합니다. 검색조건 : endswith={endswith}]")
+    for target_file in os.listdir(folder_path):      # 폴더 내의 모든 파일을 검색한다
         if target_file.endswith(endswith):    # endswith 조건에 부합하면
             if keyword is None:     # 키워드 조건이 없으면
                 file_list.append(target_file)    # file_paths 에 추가한다
@@ -103,8 +103,8 @@ def merge_csv_files(save_file_name, read_folder_path_='./', save_folder_path_='.
 
     # 2. df 합치기
     print(f'[{len(csv_file_paths)}개의 파일을 합치겠습니다]')
-    for csv_file_path in csv_file_paths:
-        print(csv_file_path)            # 합칠 파일들 이름 출력
+    # for csv_file_path in csv_file_paths:
+    #     print(csv_file_path)            # 합칠 파일들 이름 출력
 
     # 파일 읽어오고 dataframes에 추가
     for csv_file_path in csv_file_paths:
@@ -114,12 +114,9 @@ def merge_csv_files(save_file_name, read_folder_path_='./', save_folder_path_='.
     if subset is not None:  # subset이 None이면 실행하지 않는다
         merged_df = merged_df.drop_duplicates(subset=subset, keep='first')     # subset 칼럼에서 중복된 행을 제거 (첫 번째 행만 남김)
 
-    print(merged_df.tail())
-
     # 3. df를 csv로 만든다
     merged_df.to_csv(f"{save_folder_path_}/{save_file_name}_{str_start_time}.csv", encoding=save_file_encoding, index=False)
     print(f"[{len(csv_file_paths)}개의 파일을 {save_file_name}.csv 파일로 합쳤습니다]")
-    print(f"총 데이터 개수 : {len(merged_df)}개")
 
 
 ####################################
@@ -223,19 +220,6 @@ def find_file(keyword,  folder_path_='./'):
 
 
 #######################################
-# url~text 크롤링 결과와 로그 파일을 합쳐 4개의 파일로 만든다
-def merge_crawling_results(keyword):
-    merge_csv_files(keyword=keyword, save_file_name=f"merged_url_crawling_result_{keyword}",
-                    read_folder_path_="./url/crawling_result", save_folder_path_="./crawling_result")
-    merge_csv_files(keyword=keyword, save_file_name=f"merged_url_crawling_log_{keyword}",
-                    read_folder_path_="./url/crawling_log", save_folder_path_="./crawling_result", save_file_encoding='ANSI')
-    merge_csv_files(keyword=keyword, save_file_name=f"merged_text_crawling_result_{keyword}",
-                    read_folder_path_="./text/crawling_result", save_folder_path_="./crawling_result")
-    merge_csv_files(keyword=keyword, save_file_name=f"merged_text_crawling_log_{keyword}",
-                    read_folder_path_="./text/crawling_log", save_folder_path_="./crawling_result", save_file_encoding='ANSI')
-
-
-#######################################
 # 기능 : 특정 키워드(delete_keyword)가 포함된 row를 제거한 후 파일로 저장한다
 # 전제 : "target" 폴더에 적용할 파일을 올려둔다
 def delete_rows(delete_keyword, column='text', folder_path="./target"):
@@ -282,9 +266,10 @@ def is_folder_empty(folder_path):
 
 
 ###############################################################
-# 기능 : 폴더 내의 파일을 읽고, 20231115_.csv 형식의 파일들 중 가장 최근의 날짜를 반환한다
+# 기능 : 폴더 내 20231115_.csv 형식의 파일들 중 가장 크거나 작은 날짜 리턴
+# [param : option] "max" 이면 가장 최근의 날짜 / "min" 이면 가장 과거의 날짜
 # [return] : YYYYMMDD 형식의 문자열 ex) 20231115
-def find_latest_date(folder_path):
+def find_date(folder_path, option="max"):
     date_pattern = re.compile(r'\d{8}')   # 정규표현식을 사용하여 날짜 부분을 추출합니다.
     dates = []  # 추출된 날짜를 저장할 리스트
 
@@ -295,8 +280,12 @@ def find_latest_date(folder_path):
         if match:
             dates.append(match.group())
 
-    # 날짜 중 가장 큰 값을 찾아서 반환합니다.
-    return max(dates) if dates else None
+    if option == 'max':
+        return max(dates) if dates else None
+    elif option == 'min':
+        return min(dates) if dates else None
+    else:
+        return None
 
 
 ################################################################
@@ -309,3 +298,66 @@ def get_next_date(date_str):
 
     # 변경된 datetime 객체를 문자열로 변환하여 반환합니다.
     return next_date_obj.strftime('%Y-%m-%d')
+
+
+############################
+# 기능 : df를 합친다 - int값 칼럼은 더한 값을 반환한다
+def sum_dataframes(file_paths, encoding='utf-8'):
+    # 합쳐진 데이터를 저장할 빈 데이터프레임 생성
+    merged_df = pd.DataFrame()
+
+    # 각 파일별로 데이터를 읽어서 병합
+    for path in file_paths:
+        # 현재 파일 데이터를 읽음
+        df = pd.read_csv(path, encoding=encoding)
+
+        # 정수형 컬럼들의 합을 계산하여 누적
+        int_cols = df.select_dtypes(include=['int64']).columns
+        if merged_df.empty:
+            # 문자열 컬럼은 첫 번째 파일에서 가져옴
+            merged_df = df.select_dtypes(include=['object']).iloc[0].to_frame().T
+            # 정수형 컬럼의 합계를 새로운 데이터프레임에 추가
+            merged_df = pd.concat([merged_df, df[int_cols].sum().to_frame().T], axis=1)
+        else:
+            # 정수형 컬럼의 합계를 기존 데이터프레임에 추가
+            merged_df[int_cols] += df[int_cols].sum()
+
+    # 병합된 데이터프레임의 인덱스를 재설정
+    merged_df.reset_index(drop=True, inplace=True)
+
+    return merged_df
+
+
+###############################################################
+def merge_url_temp_results(search_keyword, start_date, end_date):
+    results_file_name = f"url_results_{search_keyword}_{start_date}_{end_date}"
+    print(f"results 임시파일을 {results_file_name}로 합치겠습니다")
+    util.merge_csv_files(save_file_name=results_file_name,
+                         read_folder_path_="./url/temp_results",
+                         save_folder_path_="./url/results",
+                         keyword=f"_{search_keyword}"
+                         )
+    # [2-2] results 임시파일 삭제
+    util.delete_files(folder_path="./url/temp_results",
+                      keyword=f"_{search_keyword}"
+                      )
+
+
+###############################################################
+# 기능 : url temp_logs를 합쳐 하나의 파일로 만들고, 임시 파일을 없앤다
+def merge_url_logs(search_keyword, start_date, end_date):
+    start_date = start_date.replace("-", "")
+    end_date = end_date.replace("-", "")
+    log_files = read_files(folder_path="./url/temp_logs",
+                           keyword=f"_{search_keyword}",
+                           endswith='.csv')
+    log_file_paths = []
+    for log_file in log_files:
+        log_file_paths.append(f"./url/temp_logs/{log_file}")
+    merged_df = sum_dataframes(log_file_paths, encoding='utf-8')    # logs를 합친다.
+
+    logs_file_name = f"url_logs_{search_keyword}_{start_date}_{end_date}"
+    save_file_path = f"./url/logs/{logs_file_name}.csv"
+    merged_df.to_csv(save_file_path, encoding='ANSI', index=False)   # 합친 df를 csv로 만든다
+    delete_files(folder_path="./url/temp_logs", keyword=f"_{search_keyword}")   # logs 임시파일 삭제
+

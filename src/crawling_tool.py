@@ -147,12 +147,21 @@ def get_url_rows(soup, keyword, date):
 
 
 ###################################################################
-def make_url_temp_file(row_list, date_no_dots, search_keyword):
-    url_columns = ['search_keyword', 'created_date', 'url']     # 결과로 만들 df의 칼럼
-    df_temp_file = pd.DataFrame(row_list, columns=url_columns)
-    temp_file_path = (f"./url/temp_files/"
-                      f"{date_no_dots}_temp_file_{search_keyword}.csv")  # 임시 파일 경로
-    df_temp_file.to_csv(temp_file_path, encoding='utf-8', index=False)   # 임시 파일 저장
+def make_url_temp_results(row_list, date_no_dots, search_keyword):
+    columns = ['search_keyword', 'created_date', 'url']     # 결과로 만들 df의 칼럼
+    df_temp_results = pd.DataFrame(row_list, columns=columns)
+    temp_results_path = (f"./url/temp_results/"
+                         f"{date_no_dots}_temp_results_{search_keyword}.csv")  # 임시 파일 경로
+    df_temp_results.to_csv(temp_results_path, encoding='utf-8', index=False)   # 임시 파일 저장
 
 
-
+###################################################################
+def make_url_temp_logs(row_list, date_no_dots, crawling_duration, search_keyword):
+    columns = ['crawler_type', 'search_keyword', 'row_count', 'crawling_duration']   # 결과로 만들 df의 칼럼
+    crawler_type = "naver_news_url_craler"
+    row_count = len(row_list)
+    logs = [[crawler_type, search_keyword, row_count, crawling_duration]]
+    df_temp_logs = pd.DataFrame(logs, columns=columns)
+    temp_logs_path = (f"./url/temp_logs/"
+                      f"{date_no_dots}_temp_logs_{search_keyword}.csv")  # 임시 파일 경로
+    df_temp_logs.to_csv(temp_logs_path, encoding='utf-8', index=False)   # 임시 파일 저장
