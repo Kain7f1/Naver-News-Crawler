@@ -270,3 +270,42 @@ def generate_date_list(start_date, end_date):
         start += timedelta(days=1)
 
     return date_list
+
+
+########################################
+# 기능 : 폴더가 비어있는지 판단한다.
+# [return] 비어있으면 True, 아니면 False
+def is_folder_empty(folder_path):
+    # os.listdir() 함수를 사용하여 폴더 내의 파일과 하위 폴더 목록을 가져옵니다.
+    # 폴더가 비어 있으면 이 목록은 빈 리스트가 됩니다.
+    return not os.listdir(folder_path)
+
+
+###############################################################
+# 기능 : 폴더 내의 파일을 읽고, 20231115_.csv 형식의 파일들 중 가장 최근의 날짜를 반환한다
+# [return] : YYYYMMDD 형식의 문자열 ex) 20231115
+def find_latest_date(folder_path):
+    date_pattern = re.compile(r'\d{8}')   # 정규표현식을 사용하여 날짜 부분을 추출합니다.
+    dates = []  # 추출된 날짜를 저장할 리스트
+
+    # 주어진 폴더 내의 모든 파일을 순회합니다.
+    for filename in os.listdir(folder_path):
+        # 파일 이름에서 날짜 부분을 찾습니다.
+        match = date_pattern.search(filename)
+        if match:
+            dates.append(match.group())
+
+    # 날짜 중 가장 큰 값을 찾아서 반환합니다.
+    return max(dates) if dates else None
+
+
+################################################################
+# 기능 : 다음 날짜를 반환한다.
+# [param]  YYYY-MM-DD 형식의 문자열
+# [return] YYYY-MM-DD 형식의 문자열 (다음 날짜)
+def get_next_date(date_str):
+    date_obj = datetime.strptime(date_str, '%Y-%m-%d')   # 문자열을 datetime 객체로 변환합니다.
+    next_date_obj = date_obj + timedelta(days=1)    # 하루를 더합니다.
+
+    # 변경된 datetime 객체를 문자열로 변환하여 반환합니다.
+    return next_date_obj.strftime('%Y-%m-%d')

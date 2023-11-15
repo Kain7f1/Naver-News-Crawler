@@ -21,12 +21,18 @@ keyword = "구리시"
 start_date = "2023-11-09"
 end_date = "2023-11-10"
 
-is_ex = cr.is_exist_next_page(url_32)
-print(is_ex)
+# is_ex = cr.is_exist_next_page(url_32)
+# print(is_ex)
+#
+# soup = cr.get_soup(url_32)
+# rows = (cr.get_url_rows(soup, keyword, start_date))
+# print(rows)
 
-soup = cr.get_soup(url_32)
-rows = (cr.get_url_rows(soup, keyword, start_date))
-print(rows)
+folder_path = "./url/temp_files"
+latest_date = util.find_latest_date(folder_path)
+print(latest_date)
+print(not util.is_folder_empty(folder_path))
+
 
 ###################
 # soup_box = soup.select_one("ul.list_news li.bx")
