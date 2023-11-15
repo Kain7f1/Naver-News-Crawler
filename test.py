@@ -29,10 +29,7 @@ end_date = "2023-11-10"
 # print(rows)
 
 folder_path = "./url/temp_files"
-latest_date = util.find_latest_date(folder_path)
-print(latest_date)
-print(not util.is_folder_empty(folder_path))
-
+util.merge_url_temp_logs(keyword, start_date, end_date)
 
 ###################
 # soup_box = soup.select_one("ul.list_news li.bx")
