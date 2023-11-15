@@ -131,8 +131,7 @@ def is_not_exist_next_page(url, time_sleep=0, max_retries=2):
 # 기능 : url크롤러에서 크롤링한 결과를 row로 만들어 반환한다.
 # [param 1] 검색결과 soup
 # [param 2] 뉴스 검색 날짜 (뉴스가 만들어진 날짜)
-# [return 1] is_break : for문을 멈추고 크롤링 종료할거면 True, 아니면 False
-# [return 2] row : 크롤링한 결과 row의 리스트
+# [return 1] row : 크롤링한 결과 row의 리스트
 def get_url_rows(soup, keyword, date):
     rows = []
     soup_box_list = soup.select("ul.list_news li.bx")  # 뉴스 box 리스트
@@ -145,5 +144,15 @@ def get_url_rows(soup, keyword, date):
         rows.append(new_row)
 
     return rows
+
+
+###################################################################
+def make_url_temp_file(row_list, date_no_dots, search_keyword):
+    url_columns = ['search_keyword', 'created_date', 'url']     # 결과로 만들 df의 칼럼
+    df_temp_file = pd.DataFrame(row_list, columns=url_columns)
+    temp_file_path = (f"./url/temp_files/"
+                      f"{date_no_dots}_temp_file_{search_keyword}.csv")  # 임시 파일 경로
+    df_temp_file.to_csv(temp_file_path, encoding='utf-8', index=False)   # 임시 파일 저장
+
 
 
