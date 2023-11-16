@@ -5,8 +5,6 @@ import utility_module as util
 import crawling_tool as cr
 import pandas as pd
 import requests
-import os
-import time
 
 
 ####################################################
@@ -65,23 +63,8 @@ def crawl_url(search_keyword, start_date, end_date):
     # [3. 크롤링 로그 합치기 / 임시파일 삭제]
     util.merge_url_temp_logs(search_keyword, start_date, end_date)
 
+    print(f"[크롤링 종료] {search_keyword} / {start_date} ~ {end_date}")
 
-
-    crawling_log_row = [[
-        crawler_type, community, gall_name, row_count, crawling_duration, black_count, error_count,
-        gall_id, gall_url, search_keyword, blacklist, whitelist, crawling_start_time, crawling_end_time
-    ]]
-    crawling_log_columns = [
-        'crawler_type', 'community', 'gall_name', 'row_count', 'crawling_duration', 'black_count', 'error_count',
-        'gall_id', 'gall_url', 'search_keyword', 'blacklist', 'whitelist', 'crawling_start_time', 'crawling_end_time'
-    ]
-    df_crawling_log = pd.DataFrame(crawling_log_row, columns=crawling_log_columns)
-    df_crawling_log.to_csv(crawling_log_file_path, encoding='utf-8', index=False)  # df의 내용을 csv 형식으로 저장합니다
-
-    # [4. 결과 출력]
-    print(f"[크롤링 결과] {search_keyword} / {start_date} ~ {end_date}")
-    print(f"[소요된 시간]  초")
-    print(f"[수집한 정보]  개")
 
 def crawl_text(keyword):
     print(f"[ get_content_from_url({keyword}) ]")
