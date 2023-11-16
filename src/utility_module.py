@@ -20,27 +20,6 @@ def is_korean(s):
     return bool(re.fullmatch("[\u3131-\u3163\uAC00-\uD7A3]+", s))
 
 
-# 불용어를 지운다
-def remove_stopword(keyword):
-    # 파일 열기
-    folder_path = f'./{keyword}'
-    file_name = f'{keyword}_content_tokenized.csv'
-    with open('stopwords.txt', 'r', encoding='utf-8') as file:
-        # 라인별로 읽어 리스트로 저장
-        stopwords = file.readlines()
-    stopwords = [word.strip() for word in stopwords]
-    print('stopwords.txt 를 불러왔습니다')
-
-    df = read_file(folder_path, file_name)
-    print(f'{file_name} 를 불러왔습니다')
-    for stopword in stopwords:
-        df['content'] = df['content'].str.replace(f'\\b{stopword} \\b', '', regex=True)
-    print('stopwords를 지웠습니다')
-
-    save_file(df, folder_path, f'{keyword}_content_tokenized_removed_stopwords.csv')
-    print(f'{keyword}_removed_stopwords.csv 파일을 저장했습니다')
-
-
 #####################################
 # 기능 : 함수의 실행 시간을 재는 데코레이터
 # 사용법 : @util.timer_decorator 를 함수 정의할 때 함수명 윗줄에 적는다
@@ -115,7 +94,7 @@ def merge_csv_files(save_file_name, read_folder_path_='./', save_folder_path_='.
         merged_df = merged_df.drop_duplicates(subset=subset, keep='first')     # subset 칼럼에서 중복된 행을 제거 (첫 번째 행만 남김)
 
     # 3. df를 csv로 만든다
-    merged_df.to_csv(f"{save_folder_path_}/{save_file_name}_{str_start_time}.csv", encoding=save_file_encoding, index=False)
+    merged_df.to_csv(f"{save_folder_path_}/{save_file_name}.csv", encoding=save_file_encoding, index=False)
     print(f"[{len(csv_file_paths)}개의 파일을 {save_file_name}.csv 파일로 합쳤습니다]")
 
 
@@ -330,34 +309,40 @@ def sum_dataframes(file_paths, encoding='utf-8'):
 
 ###############################################################
 def merge_url_temp_results(search_keyword, start_date, end_date):
+    # 설정값
+    start_date = start_date.replace("-", "")
+    end_date = end_date.replace("-", "")
     results_file_name = f"url_results_{search_keyword}_{start_date}_{end_date}"
-    print(f"results 임시파일을 {results_file_name}로 합치겠습니다")
-    util.merge_csv_files(save_file_name=results_file_name,
-                         read_folder_path_="./url/temp_results",
-                         save_folder_path_="./url/results",
-                         keyword=f"_{search_keyword}"
-                         )
-    # [2-2] results 임시파일 삭제
-    util.delete_files(folder_path="./url/temp_results",
-                      keyword=f"_{search_keyword}"
-                      )
+
+    # 데이터를 병합하고, 하나의 파일로 만든다
+    merge_csv_files(save_file_name=results_file_name,
+                    read_folder_path_="./url/temp_results",
+                    save_folder_path_="./url/results",
+                    keyword=f"_{search_keyword}"
+                    )
+    # 임시파일 삭제
+    delete_files(folder_path="./url/temp_results", keyword=f"_{search_keyword}")
 
 
 ###############################################################
 # 기능 : url temp_logs를 합쳐 하나의 파일로 만들고, 임시 파일을 없앤다
-def merge_url_logs(search_keyword, start_date, end_date):
+def merge_url_temp_logs(search_keyword, start_date, end_date):
+    # 설정값
     start_date = start_date.replace("-", "")
     end_date = end_date.replace("-", "")
     log_files = read_files(folder_path="./url/temp_logs",
                            keyword=f"_{search_keyword}",
                            endswith='.csv')
+    # 데이터를 하나로 병합한다
     log_file_paths = []
     for log_file in log_files:
         log_file_paths.append(f"./url/temp_logs/{log_file}")
-    merged_df = sum_dataframes(log_file_paths, encoding='utf-8')    # logs를 합친다.
+    merged_df = sum_dataframes(log_file_paths, encoding='utf-8')    # int값은 더하여 logs를 합친다.
 
+    # 파일로 저장한다
     logs_file_name = f"url_logs_{search_keyword}_{start_date}_{end_date}"
     save_file_path = f"./url/logs/{logs_file_name}.csv"
     merged_df.to_csv(save_file_path, encoding='ANSI', index=False)   # 합친 df를 csv로 만든다
-    delete_files(folder_path="./url/temp_logs", keyword=f"_{search_keyword}")   # logs 임시파일 삭제
 
+    # 임시파일을 삭제한다
+    delete_files(folder_path="./url/temp_logs", keyword=f"_{search_keyword}")   # logs 임시파일 삭제

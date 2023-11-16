@@ -113,7 +113,7 @@ def is_not_exist_next_page(url, time_sleep=0, max_retries=2):
         driver.get(url)
         next_page_button = driver.find_element(By.XPATH, '//*[@id="main_pack"]/div[2]/div/a[2]')  # 다음 page 버튼
         if next_page_button.get_attribute("aria-disabled") == "true":
-            print('[다음 페이지가 존재하지 않습니다]')
+            print('[다음 페이지가 존재하지 않습니다, 다음 날짜로 넘어갑니다]')
             driver.quit()
             return True
         elif next_page_button.get_attribute("aria-disabled") == "false":
