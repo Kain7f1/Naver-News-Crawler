@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import utility_module as util
 import pandas as pd
@@ -38,22 +38,26 @@ headers = headers_naver
 # 기능 : driver를 반환합니다
 # 리턴값 : driver
 def get_driver():
-    CHROME_DRIVER_PATH = "C:/Users/chromedriver.exe"    # (절대경로) Users 폴더에 chromedriver.exe를 설치했음
-    options = webdriver.ChromeOptions()                 # 옵션 선언
+    CHROME_DRIVER_PATH = "C:/Users/chromedriver.exe"    # (절대경로) Users 폴더에 chromedriver.exe에 설치해주세요
+    options = Options()                                 # 옵션 선언
     # [옵션 설정]
-    # options.add_argument("--start-maximized")         # 창이 최대화 되도록 열리게 한다.
-    options.add_argument("--headless")                  # 창이 없이 크롬이 실행이 되도록 만든다
+    options.page_load_strategy = 'eager'                # 페이지 로드 전략 조정 : 페이지가 완전히 로드되기를 기다리지 않음
+    options.headless = True                             # GUI 없이 브라우저를 백그라운드에서 실행
+    options.add_argument("--disable-javascript")        # 자바스크립트 비활성화
+    options.add_argument("--headless")                  # 창 없이 크롬이 실행
     options.add_argument("disable-infobars")            # 안내바가 없이 열리게 한다.
-    options.add_argument("disable-gpu")                 # 크롤링 실행시 GPU를 사용하지 않게 한다.
-    options.add_argument("--disable-dev-shm-usage")     # 공유메모리를 사용하지 않는다
-    options.add_argument("--blink-settings=imagesEnabled=false")    # 이미지 로딩 비활성화
-    options.add_argument('--disk-cache-dir=/path/to/cache-dir')     # 캐시 사용 활성화
-    options.page_load_strategy = 'none'             # 전체 페이지가 완전히 로드되기를 기다리지 않고 다음 작업을 수행 (중요)
-    options.add_argument('--log-level=3')           # 웹 소켓을 통한 로그 메시지 비활성화
-    options.add_argument('--no-sandbox')            # 브라우저 프로파일링 비활성화
-    options.add_argument('--disable-plugins')       # 다양한 플러그인 및 기능 비활성화
-    options.add_argument('--disable-extensions')    # 다양한 플러그인 및 기능 비활성화
-    options.add_argument('--disable-sync')          # 다양한 플러그인 및 기능 비활성화
+    options.add_argument("--disable-gpu")                 # GPU 가속 비활성화
+    options.add_argument("--disable-dev-shm-usage")     # 공유메모리 사용 억제
+    options.add_argument('--log-level=3')               # 웹 소켓을 통한 로그 메시지 비활성화
+    options.add_argument('--no-sandbox')                # 브라우저 프로파일링 비활성화
+    options.add_argument('--disable-plugins')           # 다양한 플러그인 및 기능 비활성화
+    options.add_argument('--disable-extensions')        # 다양한 플러그인 및 기능 비활성화
+    options.add_argument('--disable-sync')              # 다양한 플러그인 및 기능 비활성화
+    options.add_argument("--blink-settings=imagesEnabled=false")      # 이미지 로딩 비활성화
+    options.add_argument('--disk-cache-dir=/path/to/cache-dir')       # 캐시 사용 활성화
+    options.add_argument("--disable-background-timer-throttling")     # 백그라운드 프로세스 제한
+    prefs = {"profile.managed_default_content_settings.images": 2}    # 설정 정의 : 이미지 로딩 비활성화
+    options.add_experimental_option("prefs", prefs)             # 이미지 로딩 비활성화
     driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
     return driver
 
@@ -163,3 +167,47 @@ def make_url_temp_logs(row_list, date_no_dots, crawling_duration, search_keyword
     temp_logs_path = (f"./url/temp_logs/"
                       f"{date_no_dots}_temp_logs_{search_keyword}.csv")  # 임시 파일 경로
     df_temp_logs.to_csv(temp_logs_path, encoding='utf-8', index=False)   # 임시 파일 저장
+
+
+###############################################################
+# 기능 : url temp_results를 합쳐 하나의 파일로 만들고, 임시 파일을 없앤다
+def merge_url_temp_results(search_keyword, start_date, end_date):
+    # 설정값
+    start_date = start_date.replace("-", "")
+    end_date = end_date.replace("-", "")
+    results_file_name = f"url_results_{search_keyword}_{start_date}_{end_date}"
+
+    # 데이터를 병합하고, 하나의 파일로 만든다
+    util.merge_csv_files(
+        save_file_name=results_file_name,
+        read_folder_path_="./url/temp_results",
+        save_folder_path_="./url/results",
+        keyword=f"_{search_keyword}"
+    )
+    # 임시파일 삭제
+    util.delete_files(folder_path="./url/temp_results", keyword=f"_{search_keyword}")
+
+
+###############################################################
+# 기능 : url temp_logs를 합쳐 하나의 파일로 만든다
+def merge_url_temp_logs(search_keyword, start_date, end_date):
+    # 설정값
+    start_date = start_date.replace("-", "")
+    end_date = end_date.replace("-", "")
+    log_files = util.read_files(
+        folder_path="./url/temp_logs",
+        keyword=f"_{search_keyword}",
+        endswith='.csv'
+    )
+    # 데이터를 하나로 병합한다
+    log_file_paths = []
+    for log_file in log_files:
+        log_file_paths.append(f"./url/temp_logs/{log_file}")
+    merged_df = util.sum_dataframes(log_file_paths, encoding='utf-8')    # int값은 더하여 logs를 합친다.
+
+    # 파일로 저장한다
+    logs_file_name = f"url_logs_{search_keyword}_{start_date}_{end_date}"
+    save_file_path = f"./url/logs/{logs_file_name}.csv"
+    merged_df.to_csv(save_file_path, encoding='ANSI', index=False)   # 합친 df를 csv로 만든다
+
+    # delete_files(folder_path="./url/temp_logs", keyword=f"_{search_keyword}")   # logs 임시파일 삭제

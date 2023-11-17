@@ -11,21 +11,6 @@ url_33 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EA%
 # 12 : 경기신문 - ‘GTX-B 갈매역 정차를 위한 시민궐기대회’
 # 32 : 플리뉴스 - [2023 국회 기후환경 매니페스토]
 
-def test_func(max_try = 3):
-    try:
-        if max_try <= 0:
-            return max_try
-        raise Exception("에러입니다")
-    except Exception as e:
-        print("test_func()의 예외처리 : max_try : ", max_try)
-
-        test_func(max_try-1)
-    return max_try
-
-def main_func():
-    try:
-        test_func()
-    except Exception as e:
-        print("main_func의 예외처리", e)
-
-main_func()
+util.merge_csv_files(
+    save_file_name="ver_1_logs",
+    read_folder_path_="./url/temp_logs")
