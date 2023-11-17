@@ -47,12 +47,10 @@ def crawl_url(search_keyword, start_date, end_date):
             driver.get(search_url)
             html = driver.page_source
             soup = BeautifulSoup(html, 'html.parser')
-            driver.quit()
-            print("soup")
-            print(soup)
+
             # [검색 결과가 없으면, 다음 날짜로 넘어감]
             if index == 0:
-                if cr.is_no_result(search_url):
+                if cr.is_no_result(soup):
                     break
 
             # [url 크롤링 및 저장]
@@ -62,8 +60,11 @@ def crawl_url(search_keyword, start_date, end_date):
                 row_list.append(new_row)
 
             # [다음 페이지가 없으면 다음 날짜로 넘어감]
-            if cr.is_not_exist_next_page(search_url):
+            if cr.is_not_exist_next_page(driver):
+                driver.quit()
                 break
+            else:
+                driver.quit()
 
         crawling_end_time = datetime.now().replace(microsecond=0)  # 크롤링 종료 시각
         crawling_duration = round((crawling_end_time - crawling_start_time).total_seconds())  # 크롤링에 걸린 시간
