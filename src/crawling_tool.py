@@ -112,10 +112,8 @@ def get_naver_news_url(soup_box):
 # [return] 결과가 없으면 True, 존재하면 False
 def is_no_result(soup):
     try:
+        # 검색 결과가 없을 때, script_text 는 var nx_cr_area_info = []; 이다
         script_text = soup.select_one("div.main_pack script").get_text(strip=True)
-        print(script_text)
-
-        # 검색 결과가 없을 때, script_text는 var nx_cr_area_info = []; 이다
         if script_text[-3:] == "[];":
             print("[검색 결과가 없습니다]")
             return True
