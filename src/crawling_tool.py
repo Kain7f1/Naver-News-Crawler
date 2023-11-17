@@ -1,14 +1,12 @@
 from datetime import datetime, timedelta
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import utility_module as util
 import pandas as pd
 import requests
 import time
-import re
-import os
 
-from selenium.webdriver.common.by import By
 
 #############################################################################
 #                                 << 설정값 >>
