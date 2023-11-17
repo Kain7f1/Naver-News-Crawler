@@ -36,16 +36,32 @@ def crawl_url(search_keyword, start_date, end_date):
         date_no_dots = date.replace('-', '')        # 20231110 형식
         maximum_page = 400  # 네이버는 400 * 10 = 4000개의 뉴스만 불러오기 때문에 설정한 값
         # [1-2. 하루 단위로 크롤링]
-        for index in range(0, maximum_page):
+        for index in range(maximum_page):
+            # [설정값]
             page = 1 + (index * 10)
             search_url = f"https://search.naver.com/search.naver?where=news&sm=tab_pge&query={keyword_unicode}&sort=2&photo=0&field=0&pd=3&ds={date_having_dots}&de={date_having_dots}&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from{date_no_dots}to{date_no_dots},a:all&start={page}"
             print(f"{search_keyword} / {date} / page {page} ~ {page+9} / {search_url}")
-            soup = cr.get_soup(search_url)                       # bs로 html 받아오기
+
+            # selenium으로 html을 가져오고, soup으로 파싱한다
+            driver = cr.get_driver()
+            driver.get(search_url)
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            driver.quit()
+            print("soup")
+            print(soup)
+            # [검색 결과가 없으면, 다음 날짜로 넘어감]
+            if index == 0:
+                if cr.is_no_result(search_url):
+                    break
+
+            # [url 크롤링 및 저장]
+            # soup = cr.get_soup(search_url)                       # bs로 html 받아오기
             rows = cr.get_url_rows(soup, search_keyword, date)   # 크롤링 결과를 받아온다
-            # [크롤링 결과 저장]
             for new_row in rows:
                 row_list.append(new_row)
-            # [다음페이지가 없으면 다음 날짜로 넘어감]
+
+            # [다음 페이지가 없으면 다음 날짜로 넘어감]
             if cr.is_not_exist_next_page(search_url):
                 break
 

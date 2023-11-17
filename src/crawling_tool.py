@@ -105,26 +105,49 @@ def get_naver_news_url(soup_box):
         return None
 
 
+#############################
+# is_no_result()
+# 기능 : 검색 결과가 존재하는지 체크한다 (1번째 페이지에서만 사용한다)
+# [param] url
+# [return] 결과가 없으면 True, 존재하면 False
+def is_no_result(soup):
+    try:
+        script_text = soup.select_one("div.main_pack script").get_text(strip=True)
+        print(script_text)
+
+        # 검색 결과가 없을 때, script_text는 var nx_cr_area_info = []; 이다
+        if script_text[-3:] == "[];":
+            print("[검색 결과가 없습니다]")
+            return True
+        else:
+            print("[검색 결과가 존재합니다]")
+            return False
+
+    except Exception as e:
+        print("[검색 결과 x]", e)
+        return True
+
+
 ##################################################################
 # 기능 : 다음 페이지가 없으면 True 리턴
-def is_not_exist_next_page(url, time_sleep=0, max_retries=5):
+def is_not_exist_next_page(driver, time_sleep=0, max_retries=5):
     try:
         if max_retries <= 0:
             return True
-        driver = get_driver()
-        driver.get(url)
+
+        # [다음 페이지가 존재하는지 검사한다]
         next_page_button = driver.find_element(By.XPATH, '//*[@id="main_pack"]/div[2]/div/a[2]')  # 다음 page 버튼
         if next_page_button.get_attribute("aria-disabled") == "true":
             print('[다음 페이지가 존재하지 않습니다, 다음 날짜로 넘어갑니다]')
-            driver.quit()
             return True
+
         elif next_page_button.get_attribute("aria-disabled") == "false":
             print('[다음 페이지가 존재합니다]')
-            driver.quit()
             return False
+
     except Exception as e:
         print(f"[오류] is_not_exist_next_page(time_sleep={time_sleep}) ", e)
-        is_exist = is_not_exist_next_page(url, time_sleep+1, max_retries-1)
+        is_exist = is_not_exist_next_page(driver, time_sleep+1, max_retries-1)
         return is_exist
 
 
