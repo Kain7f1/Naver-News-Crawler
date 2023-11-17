@@ -105,7 +105,7 @@ def get_naver_news_url(soup_box):
 
 ##################################################################
 # 기능 : 다음 페이지가 없으면 True 리턴
-def is_not_exist_next_page(url, time_sleep=0, max_retries=2):
+def is_not_exist_next_page(url, time_sleep=0, max_retries=5):
     try:
         if max_retries <= 0:
             return True
@@ -121,7 +121,7 @@ def is_not_exist_next_page(url, time_sleep=0, max_retries=2):
             driver.quit()
             return False
     except Exception as e:
-        print(f"[오류] is_exist_next_page(time_sleep={time_sleep}) ", e)
+        print(f"[오류] is_not_exist_next_page(time_sleep={time_sleep}) ", e)
         is_exist = is_not_exist_next_page(url, time_sleep+1, max_retries-1)
         return is_exist
 
