@@ -41,32 +41,26 @@ def get_driver():
     CHROME_DRIVER_PATH = "C:/Users/chromedriver.exe"    # (절대경로) Users 폴더에 chromedriver.exe에 설치해주세요
     options = Options()                                 # 옵션 선언
     # [옵션 설정]
+    options.add_argument("--incognito")                 # 시크릿 모드
+    options.add_argument("--headless")                  # GUI 디스플레이 없애기
+    options.add_argument('--no-sandbox')                # 브라우저 프로파일링 비활성화 (중요)
+    options.add_argument('--disable-setuid-sandbox')    # 크롬 드라이버에 setuid를 하지 않음으로써 크롬의 충돌 방지
+    options.add_argument("--disable-dev-shm-usage")     # 공유메모리를 사용하지 않는다 : 메모리가 부족해서 생기는 에러 방지
+    # options.add_argument("disable-infobars")          # 안내바가 없이 열리게 한다.
     # options.add_argument("--start-maximized")         # 창이 최대화 되도록 열리게 한다.
-    options.add_argument("--headless")
+    options.page_load_strategy = 'none'                 # 전체 페이지가 완전히 로드되기를 기다리지 않고 다음 작업을 수행 (중요)
     options.add_argument("disable-gpu")                 # 크롤링 실행시 GPU를 사용하지 않게 한다.
-    options.add_argument("--disable-dev-shm-usage")     # 공유메모리를 사용하지 않는다
+    options.add_argument('--log-level=3')               # 웹 소켓을 통한 로그 메시지 비활성화
+    options.add_argument('--disable-plugins')           # 다양한 플러그인 및 기능 비활성화
+    options.add_argument('--disable-extensions')        # 다양한 플러그인 및 기능 비활성화
+    options.add_argument('--disable-sync')              # 다양한 플러그인 및 기능 비활성화
     options.add_argument("--blink-settings=imagesEnabled=false")    # 이미지 로딩 비활성화
     options.add_argument('--disk-cache-dir=/path/to/cache-dir')     # 캐시 사용 활성화
-    options.add_argument("disable-infobars")  # 안내바가 없이 열리게 한다.
-    options.page_load_strategy = 'none'             # 전체 페이지가 완전히 로드되기를 기다리지 않고 다음 작업을 수행 (중요)
-    options.add_argument('--log-level=3')           # 웹 소켓을 통한 로그 메시지 비활성화
-    options.add_argument('--no-sandbox')            # 브라우저 프로파일링 비활성화
-    options.add_argument('--disable-plugins')       # 다양한 플러그인 및 기능 비활성화
-    options.add_argument('--disable-extensions')    # 다양한 플러그인 및 기능 비활성화
-    options.add_argument('--disable-sync')          # 다양한 플러그인 및 기능 비활성화
+
+    options.add_argument("--disable-javascript")        # 자바스크립트 비활성화
+
     # options.page_load_strategy = 'eager'                # 페이지 로드 전략 조정 : 페이지가 완전히 로드되기를 기다리지 않음
-    # options.add_argument("--disable-javascript")        # 자바스크립트 비활성화
-    # options.add_argument("--headless")                  # 창 없이 크롬이 실행
     # options.add_argument("disable-infobars")            # 안내바가 없이 열리게 한다.
-    # options.add_argument("--disable-gpu")               # GPU 가속 비활성화
-    # options.add_argument("--disable-dev-shm-usage")     # 공유메모리 사용 억제
-    # options.add_argument('--log-level=3')               # 웹 소켓을 통한 로그 메시지 비활성화
-    # options.add_argument('--no-sandbox')                # 브라우저 프로파일링 비활성화
-    # options.add_argument('--disable-plugins')           # 다양한 플러그인 및 기능 비활성화
-    # options.add_argument('--disable-extensions')        # 다양한 플러그인 및 기능 비활성화
-    # options.add_argument('--disable-sync')              # 다양한 플러그인 및 기능 비활성화
-    # options.add_argument("--blink-settings=imagesEnabled=false")      # 이미지 로딩 비활성화
-    # options.add_argument('--disk-cache-dir=C:/path/to/cache-dir')       # 캐시 사용 활성화
     # options.add_argument("--disable-background-timer-throttling")     # 백그라운드 프로세스 제한
     # prefs = {"profile.managed_default_content_settings.images": 2}    # 설정 정의 : 이미지 로딩 비활성화
     # options.add_experimental_option("prefs", prefs)             # 이미지 로딩 비활성화
