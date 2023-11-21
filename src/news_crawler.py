@@ -4,7 +4,7 @@ import utility_module as util
 import crawling_tool as cr
 import pandas as pd
 import requests
-
+import time
 
 ####################################################
 # crawl_url()
@@ -89,43 +89,73 @@ def crawl_url_recursion(search_keyword, start_date, end_date):
         crawl_url_recursion(search_keyword, start_date, end_date)
 
 
-def crawl_text(keyword):
-    print(f"[ get_content_from_url({keyword}) ]")
-    header = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"}
-    # 파일 이름을 불러온다
-    url_file_names = util.load_file_names(f'./{keyword}/url', endswith='url.csv')
+#################################
+# - results 파일 columns
+# search_keyword : 검색어
+# created_date : 뉴스 생성 날짜 (YYYY-MM-DD 형식)
+# created_time : 뉴스 생성 시간 (HH:MM:SS 형식)
+# media : 언론사
+# title : 뉴스 제목
+# text : 뉴스 본문 text
+# url : 뉴스 url
 
-    for url_file_name in url_file_names:
-        content_file_name = f"{url_file_name[:-8]}_content.csv"
-        print(f"[시작] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들겠습니다")
+# - logs 파일 columns
+# crawler_type : 크롤러 타입 (naver_news_text_craler)
+# search_keyword : 검색어
+# url_count : 입력받은 url 개수
+# text_count : 수집된 text 정보 개수
+# error_count : 오류 발생한 row 개수
+# crawling_duration : 크롤링에 걸린 시간
 
-        # url 파일 불러오기
-        df_url = util.read_file(f'./{keyword}/url', file_name=url_file_name)
-        print(df_url.head())
-        print(f"{url_file_name}의 데이터를 불러왔습니다")
-        df_content = pd.DataFrame(columns=['date', 'url', 'content'])
+# - errors 파일 columns
+# crawler_type : 크롤러 타입 (naver_news_text_craler)
+# created_date : 에러가 발생한 뉴스가 만들어진 날짜. 특정 날짜를 기점으로 html 형식이 바뀐 경우도 있기 때문에 수집한다.
+# error_message : 에러 메세지
+# url : 에러가 발생한 뉴스 url
+def crawl_text(search_keyword):
+    # [0. 설정값]
+    url_files = util.read_files(folder_path=f"./url/results", keyword=f"_{search_keyword}_")
+    if len(url_files) == 0:
+        print("키워드에 맞는 파일이 존재하지 않습니다.")
+        return -1
+    url_file_name = url_files[0]   # 키워드가 포함된 첫번째 파일 이름
+    print(f"사용할 파일 명 : {url_file_name}")
+    df_url = pd.read_csv(filepath_or_buffer=f"./url/results/{url_file_name}", encoding="utf-8")
+    print(f"데이터의 길이 : {len(df_url)}")
+    print(f"[네이버 뉴스 text 크롤링을 시작하겠습니다] search_keyword : {search_keyword}")
+    time.sleep(5)
 
-        for index, row in df_url.iterrows():
-            url = row['url']
-            try:
-                if url[:14] == 'https://sports':
-                    continue
-                # url로부터 content를 받아온다
-                res = requests.get(url, headers=header)
-                soup = BeautifulSoup(res.text, "html.parser")
-                content = soup.select_one('article#dic_area').get_text(strip=True).replace("\n", " ")
-                print(f'[{url_file_name} : {index}째 row]')
-            except Exception as e:
-                # url이 이상하면 건너뜀
-                print("[error message] ", e)
-                print("url : ", url)
-                continue
-            content = util.preprocess_content(content)  # 간단한 전처리
-            new_row = [row['date'], url, content]
-            df_content.loc[len(df_content)] = new_row
-
-        # csv로 만든다
-        util.create_folder(f'./{keyword}/content')
-        util.save_file(df_content, f'./{keyword}/content', file_name=content_file_name)
-        print(f"[종료] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들었습니다")
+    # [1. text 크롤링]
+    # for url_file_name in url_file_names:
+    #     content_file_name = f"{url_file_name[:-8]}_content.csv"
+    #     print(f"[시작] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들겠습니다")
+    #
+    #     # url 파일 불러오기
+    #     df_url = util.read_file(f'./{keyword}/url', file_name=url_file_name)
+    #     print(df_url.head())
+    #     print(f"{url_file_name}의 데이터를 불러왔습니다")
+    #     df_content = pd.DataFrame(columns=['date', 'url', 'content'])
+    #
+    #     for index, row in df_url.iterrows():
+    #         url = row['url']
+    #         try:
+    #             if url[:14] == 'https://sports':
+    #                 continue
+    #             # url로부터 content를 받아온다
+    #             res = requests.get(url, headers=header)
+    #             soup = BeautifulSoup(res.text, "html.parser")
+    #             content = soup.select_one('article#dic_area').get_text(strip=True).replace("\n", " ")
+    #             print(f'[{url_file_name} : {index}째 row]')
+    #         except Exception as e:
+    #             # url이 이상하면 건너뜀
+    #             print("[error message] ", e)
+    #             print("url : ", url)
+    #             continue
+    #         content = util.preprocess_content(content)  # 간단한 전처리
+    #         new_row = [row['date'], url, content]
+    #         df_content.loc[len(df_content)] = new_row
+    #
+    #     # csv로 만든다
+    #     util.create_folder(f'./{keyword}/content')
+    #     util.save_file(df_content, f'./{keyword}/content', file_name=content_file_name)
+    #     print(f"[종료] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들었습니다")
