@@ -53,7 +53,7 @@ def create_folder(folder_path_='./'):
 # 기능 : 폴더 내의 파일들 이름을 읽어서, 파일 이름들 리스트를 가져오는 함수
 def read_files(folder_path='./', keyword=None, endswith='.csv'):
     file_list = []
-    print(f"[{folder_path} 내의 파일을 탐색합니다. 검색조건 : endswith={endswith}]")
+    print(f"[{folder_path} 내의 파일을 탐색합니다. 검색조건 : keyword={keyword}, endswith={endswith}]")
     for target_file in os.listdir(folder_path):      # 폴더 내의 모든 파일을 검색한다
         if target_file.endswith(endswith):    # endswith 조건에 부합하면
             if keyword is None:     # 키워드 조건이 없으면
