@@ -82,6 +82,13 @@ def crawl_url(search_keyword, start_date, end_date):
     print(f"[크롤링 종료] {search_keyword} / {start_date} ~ {end_date}")
 
 
+def crawl_url_recursion(search_keyword, start_date, end_date):
+    try:
+        crawl_url(search_keyword, start_date, end_date)
+    except Exception:
+        crawl_url_recursion(search_keyword, start_date, end_date)
+
+
 def crawl_text(keyword):
     print(f"[ get_content_from_url({keyword}) ]")
     header = {
