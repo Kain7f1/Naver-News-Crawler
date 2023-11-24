@@ -187,7 +187,7 @@ def make_url_temp_results(row_list, date_no_dots, search_keyword):
 ###################################################################
 def make_url_temp_logs(row_list, date_no_dots, crawling_duration, search_keyword):
     columns = ['crawler_type', 'search_keyword', 'row_count', 'crawling_duration']   # 결과로 만들 df의 칼럼
-    crawler_type = "naver_news_url_craler"
+    crawler_type = "naver_news_url_crawler"
     row_count = len(row_list)
     logs = [[crawler_type, search_keyword, row_count, crawling_duration]]
     df_temp_logs = pd.DataFrame(logs, columns=columns)
