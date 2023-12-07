@@ -2,27 +2,40 @@ import utility_module as util
 import crawling_tool as cr
 from bs4 import BeautifulSoup
 
-url_8  = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EA%B5%AC%EB%A6%AC%EC%8B%9C&sort=2&photo=0&field=0&pd=3&ds=2023.11.10&de=2023.11.10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20231110to20231110,a:all&start=8"
-url_12 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EA%B5%AC%EB%A6%AC%EC%8B%9C&sort=2&photo=0&field=0&pd=3&ds=2023.11.10&de=2023.11.10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20231110to20231110,a:all&start=12"
-url_21 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EA%B5%AC%EB%A6%AC%EC%8B%9C&sort=2&photo=0&field=0&pd=3&ds=2023.11.10&de=2023.11.10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20231110to20231110,a:all&start=21"
-url_32 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EA%B5%AC%EB%A6%AC%EC%8B%9C&sort=2&photo=0&field=0&pd=3&ds=2023.11.10&de=2023.11.10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20231110to20231110,a:all&start=32"
-url_33 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EA%B5%AC%EB%A6%AC%EC%8B%9C&sort=2&photo=0&field=0&pd=3&ds=2023.11.10&de=2023.11.10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20231110to20231110,a:all&start=33"
+# search_keyword : 검색어
+# created_date : 뉴스 생성 날짜 (YYYY-MM-DD 형식)
+# created_time : 뉴스 생성 시간 (HH:MM:SS 형식)
+# media : 언론사
+# title : 뉴스 제목
+# text : 뉴스 본문 text
+# url : 뉴스 url
 
-no_result_url = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EC%82%BC%EC%A0%84&sort=2&photo=0&field=0&pd=3&ds=2008.01.01&de=2008.01.01&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20080101to20080101,a:all&start=1"
-no_2 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EC%82%BC%EC%A0%84&sort=2&photo=0&field=0&pd=3&ds=2008.01.01&de=2008.01.01&mynews=0&office_type=0&office_section_code=0&news_office_checked=&office_category=0&service_area=0&nso=so:r,p:from20080101to20080101,a:all&start=1"
+url_1 = "https://n.news.naver.com/mnews/article/087/0000158119?sid=102"
+url_2 = "https://n.news.naver.com/mnews/article/215/0000491837?sid=101"
+url_3 = "https://n.news.naver.com/mnews/article/032/0003256030?sid=101"
 
-# driver = cr.get_driver()
-# driver.get(no_2)
-# html = driver.page_source
-# soup = BeautifulSoup(html, 'html.parser')
-# driver.quit()
+# soup = cr.get_soup(url_3)
+# data_date_time = soup.select_one("div.media_end_head_info_datestamp_bunch").find('span')['data-date-time']
+# created_date = data_date_time.split(" ")[0]
+# created_time = data_date_time.split(" ")[1]
+# media = soup.select_one("div.media_end_head_top a").find('img')['alt']
+# title = soup.select_one("div.media_end_head_title").get_text(strip=True)
+# text = soup.select_one("article#dic_area").get_text(strip=True)
 #
-# is_no = cr.is_no_result(soup)
-# print(is_no)
+# print(created_date)
+# print(created_time)
+# print(media)
+# print(title)
+# print(text)
 
+##########
+search_keyword = "금리"
+cr.merge_text_temp_files(search_keyword)
+
+#######################
 # 합치기
-util.merge_csv_files(
-    save_file_name="logs_2",
-    read_folder_path_="./url/temp_logs")
+# util.merge_csv_files(
+#     save_file_name="logs_2",
+#     read_folder_path_="./url/temp_logs")
 
 
