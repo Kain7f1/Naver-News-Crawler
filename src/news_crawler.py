@@ -3,8 +3,9 @@ from datetime import datetime
 import utility_module as util
 import crawling_tool as cr
 import pandas as pd
-import requests
 import time
+import traceback
+
 
 ####################################################
 # crawl_url()
@@ -20,7 +21,7 @@ def crawl_url(search_keyword, start_date, end_date):
     util.create_folder(f"./url/logs")
 
     # [0-2. 임시파일 폴더를 읽고, 파일이 있으면 진행된 부분부터 시작한다]
-    if not util.is_folder_empty(f"./url/temp_results"):
+    if not util.is_folder_empty(f"./url/temp_logs"):
         temp_date = util.find_date(folder_path="./url/temp_results", option="max")    # 가장 최근 날짜 (YYYYMMDD)
         latest_date = f"{temp_date[:4]}-{temp_date[4:6]}-{temp_date[6:]}"   # YYYY-MM-DD
         start_date = util.get_next_date(latest_date)    # 크롤링 시작할 날짜 설정 (되어있는 날의 다음 날 부터)
@@ -90,72 +91,65 @@ def crawl_url_recursion(search_keyword, start_date, end_date):
 
 
 #################################
-# - results 파일 columns
-# search_keyword : 검색어
-# created_date : 뉴스 생성 날짜 (YYYY-MM-DD 형식)
-# created_time : 뉴스 생성 시간 (HH:MM:SS 형식)
-# media : 언론사
-# title : 뉴스 제목
-# text : 뉴스 본문 text
-# url : 뉴스 url
 
-# - logs 파일 columns
-# crawler_type : 크롤러 타입 (naver_news_text_craler)
-# search_keyword : 검색어
-# url_count : 입력받은 url 개수
-# text_count : 수집된 text 정보 개수
-# error_count : 오류 발생한 row 개수
-# crawling_duration : 크롤링에 걸린 시간
+def crawl_text(search_keyword, chunk_size=100):
+    # [0-1. 설정값, 폴더 만들기]
+    crawler_type = "naver_news_text_crawler"
+    util.create_folder(f"./text/temp_results")
+    util.create_folder(f"./text/temp_logs")
+    util.create_folder(f"./text/temp_errors")
+    util.create_folder(f"./text/results")
+    util.create_folder(f"./text/logs")
+    util.create_folder(f"./text/errors")
 
-# - errors 파일 columns
-# crawler_type : 크롤러 타입 (naver_news_text_craler)
-# created_date : 에러가 발생한 뉴스가 만들어진 날짜. 특정 날짜를 기점으로 html 형식이 바뀐 경우도 있기 때문에 수집한다.
-# error_message : 에러 메세지
-# url : 에러가 발생한 뉴스 url
-def crawl_text(search_keyword):
-    # [0. 설정값]
-    url_files = util.read_files(folder_path=f"./url/results", keyword=f"_{search_keyword}_")
+    # [0-2. url results 파일, text 임시파일 체크]
+    url_files = util.read_files(folder_path=f"./url/results", keyword=f"_{search_keyword}_")  # 폴더 내 파일 있는지 확인
     if len(url_files) == 0:
-        print("키워드에 맞는 파일이 존재하지 않습니다.")
-        return -1
+        return "입력 키워드에 맞는 파일이 존재하지 않습니다"
     url_file_name = url_files[0]   # 키워드가 포함된 첫번째 파일 이름
-    print(f"사용할 파일 명 : {url_file_name}")
-    df_url = pd.read_csv(filepath_or_buffer=f"./url/results/{url_file_name}", encoding="utf-8")
-    print(f"데이터의 길이 : {len(df_url)}")
+    print(f"[사용할 파일 명 : {url_file_name}]")
+    df_url = pd.read_csv(filepath_or_buffer=f"./url/results/{url_file_name}", encoding="utf-8")  # 파일을 df로 읽어오기
+    url_row_count = len(df_url)
+    if url_row_count == 0:
+        return "url 파일에 저장된 데이터가 없습니다"
+    sub_dfs = util.split_df_into_sub_dfs(df_url, chunk_size=chunk_size)    # df를 chunk_size 단위로 쪼갬
+    print(f"[데이터를 sub_df 단위로 쪼갰습니다. sub_df의 수 : {len(sub_dfs)}]")
+    done_index = util.get_done_index(keyword=f"{search_keyword}", folder_path="./text/temp_results")  # 작업했던 마지막 파일의 번호
+    print(f"[크롤링 진행도 : {(done_index+1)*chunk_size}/{url_row_count}]")
     print(f"[네이버 뉴스 text 크롤링을 시작하겠습니다] search_keyword : {search_keyword}")
-    time.sleep(5)
+    time.sleep(1)
 
-    # [1. text 크롤링]
-    # for url_file_name in url_file_names:
-    #     content_file_name = f"{url_file_name[:-8]}_content.csv"
-    #     print(f"[시작] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들겠습니다")
-    #
-    #     # url 파일 불러오기
-    #     df_url = util.read_file(f'./{keyword}/url', file_name=url_file_name)
-    #     print(df_url.head())
-    #     print(f"{url_file_name}의 데이터를 불러왔습니다")
-    #     df_content = pd.DataFrame(columns=['date', 'url', 'content'])
-    #
-    #     for index, row in df_url.iterrows():
-    #         url = row['url']
-    #         try:
-    #             if url[:14] == 'https://sports':
-    #                 continue
-    #             # url로부터 content를 받아온다
-    #             res = requests.get(url, headers=header)
-    #             soup = BeautifulSoup(res.text, "html.parser")
-    #             content = soup.select_one('article#dic_area').get_text(strip=True).replace("\n", " ")
-    #             print(f'[{url_file_name} : {index}째 row]')
-    #         except Exception as e:
-    #             # url이 이상하면 건너뜀
-    #             print("[error message] ", e)
-    #             print("url : ", url)
-    #             continue
-    #         content = util.preprocess_content(content)  # 간단한 전처리
-    #         new_row = [row['date'], url, content]
-    #         df_content.loc[len(df_content)] = new_row
-    #
-    #     # csv로 만든다
-    #     util.create_folder(f'./{keyword}/content')
-    #     util.save_file(df_content, f'./{keyword}/content', file_name=content_file_name)
-    #     print(f"[종료] : {url_file_name} 파일의 url로부터 {content_file_name} 파일을 만들었습니다")
+    # [1. text 크롤링 : sub_dfs 단위로]
+    for sub_df_index in range(len(sub_dfs)):
+        crawling_start_time = datetime.now().replace(microsecond=0)  # 시작 시각 : 실행 시간을 잴 때 사용
+
+        # [1-1. news text 받아오기]
+        if sub_df_index <= done_index:  # 작업했던 파일이 존재하면, 다음 것부터 시작한다
+            continue
+        sub_df = sub_dfs[sub_df_index]  # 작업할 단위 설정 : sub_df
+        sub_df_results = []             # 데이터를 저장할 공간 : sub_df_results
+        sub_df_errors = []              # 에러 정보를 저장할 공간 : sub_df_errors
+        for index, url_row in sub_df.iterrows():
+            # [sub_df에서, url_row 1개씩 읽어온다]
+            try:
+                print(f"[{sub_df_index * chunk_size + index + 1}/{url_row_count}] 본문 페이지 : {url_row['url']}")
+                soup = cr.get_soup(url_row['url'])  # url을 Beatifulsoup를 사용하여 읽어온다
+                new_row = cr.get_news_row(url_row, soup)  # 본문 정보 크롤링
+                sub_df_results.append(new_row)  # sub_df_results에 크롤링한 정보 저장
+                print("- 본문 정보를 추가했습니다 : ", new_row[-2])
+            except Exception as e:
+                print("[에러 발생 : 1-1. news text 받아오기]", e)
+                error_info = traceback.format_exc()
+                sub_df_errors.append([crawler_type, url_row['created_date'], error_info, url_row['url']])
+        # logs 정보 저장
+        crawling_end_time = datetime.now().replace(microsecond=0)  # 종료 시각
+        crawling_duration = round((crawling_end_time - crawling_start_time).total_seconds())  # 크롤링에 걸린 시간
+        sub_df_logs = [[crawler_type, search_keyword, len(sub_df_results), len(sub_df_errors), crawling_duration]]
+
+        # [1-2. 임시 파일 저장]
+        cr.save_text_temp_files(search_keyword, sub_df_index, sub_df_results, sub_df_logs, sub_df_errors)
+
+    # [2. 임시 파일 합치기]
+    cr.merge_text_temp_files(search_keyword)
+
+    print(f"[크롤링 종료] {search_keyword}")

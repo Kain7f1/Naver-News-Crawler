@@ -40,7 +40,8 @@ def timer_decorator(func):
 def create_folder(folder_path_='./'):
     # 폴더가 존재하지 않는 경우, 폴더 생성
     if os.path.exists(folder_path_):
-        print(f"[{folder_path_} 폴더가 이미 존재합니다]")
+        pass
+        # print(f"[{folder_path_} 폴더가 이미 존재합니다]")
     else:
         os.makedirs(folder_path_)
         print(f"[폴더 : {folder_path_}를 만들었습니다]")
@@ -113,20 +114,18 @@ def delete_files(folder_path, keyword=None):
 
 #####################################
 # 전처리 함수 : dcinside
-def preprocess_text_dc(text):
+def preprocess_text(text):
     # 바꿀 것들 리스트
     replacements = {
         '\n': ' ',
         '\t': ' ',
-        ',': ' ',
-        '- dc official App': '',
-        '- dc App': ''
+        ',': ' '
     }
     for old, new in replacements.items():
         text = text.replace(old, new)   # replacements의 전자를 후자로 교체함
     result = text.strip()               # 공백제거
     if len(result) == 0:
-        return "_"      # 널값이면 "_"을 리턴한다
+        return "_"      # 결과가 없으면 "_" 리턴
     else:
         return result   # 전처리 결과값 리턴
 
@@ -177,6 +176,23 @@ def split_df_into_sub_dfs(df, chunk_size=1000):
         sub_dfs.append(sub_df)
 
     return sub_dfs
+
+
+##############################
+# 기능 : 폴더 내 keyword와 일치하는 파일만 검색, 임시파일 어디까지 했는지 int 값으로 반환한다. 없으면 -1 반환
+def get_done_index(keyword, folder_path):
+    done_index = -1
+    if is_folder_empty(folder_path):
+        return done_index   # 폴더가 비어있으면 -1 리턴
+    pattern = re.compile(r"^(\d+)_temp_results_" + re.escape(keyword) + r".csv$")
+
+    for filename in os.listdir(folder_path):
+        match = pattern.match(filename)
+        if match:
+            num = int(match.group(1))
+            done_index = max(done_index, num)   # 보다 큰 값으로 done_index가 결정됨
+
+    return done_index
 
 
 ########################################

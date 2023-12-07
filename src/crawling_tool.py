@@ -193,11 +193,11 @@ def make_url_temp_logs(row_list, date_no_dots, crawling_duration, search_keyword
     df_temp_logs = pd.DataFrame(logs, columns=columns)
     temp_logs_path = (f"./url/temp_logs/"
                       f"{date_no_dots}_temp_logs_{search_keyword}.csv")  # 임시 파일 경로
-    df_temp_logs.to_csv(temp_logs_path, encoding='ANSI', index=False)   # 임시 파일 저장
+    df_temp_logs.to_csv(temp_logs_path, encoding='utf-8', index=False)   # 임시 파일 저장
 
 
 ###############################################################
-# 기능 : url temp_results를 합쳐 하나의 파일로 만들고, 임시 파일을 없앤다
+# 기능 : url temp_results를 합쳐 하나의 파일로 만든다
 def merge_url_temp_results(search_keyword, start_date, end_date):
     # 설정값
     start_date = start_date.replace("-", "")
@@ -230,11 +230,84 @@ def merge_url_temp_logs(search_keyword, start_date, end_date):
     log_file_paths = []
     for log_file in log_files:
         log_file_paths.append(f"./url/temp_logs/{log_file}")
-    merged_df = util.sum_dataframes(log_file_paths, encoding='ANSI')    # int값은 더하여 logs를 합친다.
+    merged_df = util.sum_dataframes(log_file_paths, encoding='utf-8')    # int값은 더하여 logs를 합친다.
 
     # 파일로 저장한다
     logs_file_name = f"url_logs_{search_keyword}_{start_date}_{end_date}"
     save_file_path = f"./url/logs/{logs_file_name}.csv"
-    merged_df.to_csv(save_file_path, encoding='ANSI', index=False)   # 합친 df를 csv로 만든다
+    merged_df.to_csv(save_file_path, encoding='utf-8', index=False)   # 합친 df를 csv로 만든다
 
     # delete_files(folder_path="./url/temp_logs", keyword=f"_{search_keyword}")   # logs 임시파일 삭제
+
+
+#######################################
+def get_news_row(url_row, soup, max_retries=1):
+    # [search_keyword, created_date, created_time, media, title, text, url]
+    new_row = ["", "", "", "", "", "", ""]
+    try:
+        if max_retries <= 0:
+            print("[최대 재시도 횟수 초과 : get_news_row()]")
+            return new_row
+        data_date_time = soup.select_one("div.media_end_head_info_datestamp_bunch").find('span')['data-date-time']
+        created_date = data_date_time.split(" ")[0]
+        created_time = data_date_time.split(" ")[1]
+        media = soup.select_one("div.media_end_head_top a").find('img')['alt']
+        title = soup.select_one("div.media_end_head_title").get_text(strip=True)
+        text = soup.select_one("article#dic_area").get_text(strip=True)
+        text = util.preprocess_text(text) # text를 불러오고, 전처리한다
+
+        # [크롤링한 정보를 new_row에 저장한다]
+        new_row = [url_row['search_keyword'], created_date, created_time, media, title, text, url_row['url']]
+
+    except Exception as e:
+        print(f"[오류 : get_news_row()] ", e)
+        new_row = get_news_row(url_row, soup, max_retries-1)
+
+    return new_row
+
+
+##############################################################
+# 기능 : text 크롤러에서 sub_df 단위 임시파일을 저장한다
+def save_text_temp_files(search_keyword, sub_df_index, sub_df_results, sub_df_logs, sub_df_errors):
+    results_columns = ['search_keyword', 'created_date', 'created_time', 'media', 'title', 'text', 'url']
+    logs_columns = ['crawler_type', 'search_keyword', 'row_count', 'error_count', 'crawling_duration']
+    errors_columns = ['crawler_type', 'created_date', 'error_info', 'url']
+
+    # [임시 results 저장]
+    temp_results_index = "{:06}".format(sub_df_index)
+    print("[sub_df 크롤링 결과 임시파일을 저장합니다]")
+    df_temp_results = pd.DataFrame(sub_df_results, columns=results_columns)
+    temp_results_path = (f"./text/temp_results/"
+                         f"{temp_results_index}_temp_results_{search_keyword}.csv")  # temp 파일 경로
+    df_temp_results.to_csv(temp_results_path, encoding='utf-8', index=False)  # temp 파일 저장
+    # [임시 logs 저장]
+    df_temp_logs = pd.DataFrame(sub_df_logs, columns=logs_columns)
+    temp_errors_path = (f"./text/temp_logs/"
+                        f"{temp_results_index}_temp_logs_{search_keyword}.csv")  # temp logs 경로
+    df_temp_logs.to_csv(temp_errors_path, encoding='utf-8', index=False)  # temp logs 저장
+    # [임시 errors 저장] (에러가 존재하는 경우에만)
+    if len(sub_df_errors) > 0:
+        df_temp_errors = pd.DataFrame(sub_df_errors, columns=errors_columns)
+        temp_errors_path = (f"./text/temp_errors/"
+                            f"{temp_results_index}_temp_errors_{search_keyword}.csv")  # temp errors 경로
+        df_temp_errors.to_csv(temp_errors_path, encoding='utf-8', index=False)  # temp errors 저장
+
+
+###############################################################
+# 기능 : text 크롤러의 임시 파일을 하나로 합친다
+def merge_text_temp_files(search_keyword):
+    # results
+    if not util.is_folder_empty(f"./text/temp_results"):
+        results_file_name = f"text_results_{search_keyword}"
+        util.merge_csv_files(save_file_name=results_file_name, read_folder_path_="./text/temp_results",
+                             save_folder_path_="./text/results", keyword=f"_{search_keyword}")
+    # logs
+    if not util.is_folder_empty(f"./text/temp_logs"):
+        logs_file_name = f"text_logs_{search_keyword}"
+        util.merge_csv_files(save_file_name=logs_file_name, read_folder_path_="./text/temp_logs",
+                             save_folder_path_="./text/logs", keyword=f"_{search_keyword}")
+    # errors
+    if not util.is_folder_empty(f"./text/temp_errors"):
+        errors_file_name = f"text_errors_{search_keyword}"
+        util.merge_csv_files(save_file_name=errors_file_name, read_folder_path_="./text/temp_errors",
+                             save_folder_path_="./text/errors", keyword=f"_{search_keyword}")
