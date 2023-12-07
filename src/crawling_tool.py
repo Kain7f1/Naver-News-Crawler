@@ -187,13 +187,13 @@ def make_url_temp_results(row_list, date_no_dots, search_keyword):
 ###################################################################
 def make_url_temp_logs(row_list, date_no_dots, crawling_duration, search_keyword):
     columns = ['crawler_type', 'search_keyword', 'row_count', 'crawling_duration']   # 결과로 만들 df의 칼럼
-    crawler_type = "naver_news_url_craler"
+    crawler_type = "naver_news_url_crawler"
     row_count = len(row_list)
     logs = [[crawler_type, search_keyword, row_count, crawling_duration]]
     df_temp_logs = pd.DataFrame(logs, columns=columns)
     temp_logs_path = (f"./url/temp_logs/"
                       f"{date_no_dots}_temp_logs_{search_keyword}.csv")  # 임시 파일 경로
-    df_temp_logs.to_csv(temp_logs_path, encoding='utf-8', index=False)   # 임시 파일 저장
+    df_temp_logs.to_csv(temp_logs_path, encoding='ANSI', index=False)   # 임시 파일 저장
 
 
 ###############################################################
@@ -212,7 +212,7 @@ def merge_url_temp_results(search_keyword, start_date, end_date):
         keyword=f"_{search_keyword}"
     )
     # 임시파일 삭제
-    util.delete_files(folder_path="./url/temp_results", keyword=f"_{search_keyword}")
+    # util.delete_files(folder_path="./url/temp_results", keyword=f"_{search_keyword}")
 
 
 ###############################################################
@@ -230,7 +230,7 @@ def merge_url_temp_logs(search_keyword, start_date, end_date):
     log_file_paths = []
     for log_file in log_files:
         log_file_paths.append(f"./url/temp_logs/{log_file}")
-    merged_df = util.sum_dataframes(log_file_paths, encoding='utf-8')    # int값은 더하여 logs를 합친다.
+    merged_df = util.sum_dataframes(log_file_paths, encoding='ANSI')    # int값은 더하여 logs를 합친다.
 
     # 파일로 저장한다
     logs_file_name = f"url_logs_{search_keyword}_{start_date}_{end_date}"
