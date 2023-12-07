@@ -73,10 +73,10 @@ def crawl_url(search_keyword, start_date, end_date):
         cr.make_url_temp_results(row_list, date_no_dots, search_keyword)
         cr.make_url_temp_logs(row_list, date_no_dots, crawling_duration, search_keyword)
 
-    # [2. 크롤링 결과 합치기 / 임시파일 삭제]
+    # [2. 크롤링 결과 합치기]
     cr.merge_url_temp_results(search_keyword, start_date, end_date)
 
-    # [3. 크롤링 로그 합치기 / 임시파일 삭제]
+    # [3. 크롤링 로그 합치기]
     cr.merge_url_temp_logs(search_keyword, start_date, end_date)
 
     print(f"[크롤링 종료] {search_keyword} / {start_date} ~ {end_date}")
