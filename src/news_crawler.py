@@ -92,7 +92,7 @@ def crawl_url_recursion(search_keyword, start_date, end_date):
 
 #################################
 
-def crawl_text(search_keyword, chunk_size=100):
+def crawl_text(search_keyword, chunk_size=1000):
     # [0-1. 설정값, 폴더 만들기]
     crawler_type = "naver_news_text_crawler"
     util.create_folder(f"./text/temp_results")
@@ -153,3 +153,10 @@ def crawl_text(search_keyword, chunk_size=100):
     cr.merge_text_temp_files(search_keyword)
 
     print(f"[크롤링 종료] {search_keyword}")
+
+
+def crawl_text_recursion(search_keyword):
+    try:
+        crawl_text(search_keyword)
+    except Exception:
+        crawl_text_recursion(search_keyword)
