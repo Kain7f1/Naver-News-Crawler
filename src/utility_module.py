@@ -6,34 +6,6 @@ import os
 import re
 
 
-##########################################
-# 기능 : 한글 문자열을 유니코드 UTF-8로 인코딩하여 반환합니다
-# 입력 예시 : '금리'
-# 리턴값 예시 : '%EA%B8%88%EB%A6%AC'
-def convert_to_unicode(input_str):
-    return '%' + '%'.join(['{:02X}'.format(byte) for byte in input_str.encode('utf-8')])
-
-
-#########################################################################################################
-# 한국어인지 검사하는 함수
-def is_korean(s):
-    return bool(re.fullmatch("[\u3131-\u3163\uAC00-\uD7A3]+", s))
-
-
-#####################################
-# 기능 : 함수의 실행 시간을 재는 데코레이터
-# 사용법 : @util.timer_decorator 를 함수 정의할 때 함수명 윗줄에 적는다
-def timer_decorator(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print(f"{func.__name__} 함수의 실행 시간은 {elapsed_time:.2f} 초 입니다")
-        return result
-    return wrapper
-
-
 #####################################
 # 기능 : 폴더를 생성한다
 # 입력값 : 파일 경로(이름)
@@ -130,15 +102,6 @@ def preprocess_text(text):
         return result   # 전처리 결과값 리턴
 
 
-##################################################
-# 기능 : 입력한 문자열에, list의 원소가 포함되어 있으면 True, 아니면 False를 리턴하는 함수
-def contains_any_from_list(str_, list_):
-    for item in list_:
-        if item in str_:
-            return True
-    return False
-
-
 ##########################################
 # split_rows_into_chunks()
 # 기능 : row를 chunk_size단위로 끊은 리스트를 반환하는 함수
@@ -182,9 +145,10 @@ def split_df_into_sub_dfs(df, chunk_size=1000):
 # 기능 : 폴더 내 keyword와 일치하는 파일만 검색, 임시파일 어디까지 했는지 int 값으로 반환한다. 없으면 -1 반환
 def get_done_index(keyword, folder_path):
     done_index = -1
+    file_type = folder_path.split("/")[-1]  # 파일 타입. ex) temp_logs, temp_results
     if is_folder_empty(folder_path):
         return done_index   # 폴더가 비어있으면 -1 리턴
-    pattern = re.compile(r"^(\d+)_temp_results_" + re.escape(keyword) + r".csv$")
+    pattern = re.compile(rf"^(\d+)_{file_type}_" + re.escape(keyword) + r".csv$")
 
     for filename in os.listdir(folder_path):
         match = pattern.match(filename)
