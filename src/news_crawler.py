@@ -102,7 +102,7 @@ def crawl_text(search_keyword, chunk_size=1000):
     util.create_folder(f"./text/logs")
     util.create_folder(f"./text/errors")
 
-    # [0-2. url results 파일, text 임시파일 체크]
+    # [0-2. url results 파일 체크]
     url_files = util.read_files(folder_path=f"./url/results", keyword=f"_{search_keyword}_")  # 폴더 내 파일 있는지 확인
     if len(url_files) == 0:
         return "입력 키워드에 맞는 파일이 존재하지 않습니다"
@@ -114,7 +114,10 @@ def crawl_text(search_keyword, chunk_size=1000):
         return "url 파일에 저장된 데이터가 없습니다"
     sub_dfs = util.split_df_into_sub_dfs(df_url, chunk_size=chunk_size)    # df를 chunk_size 단위로 쪼갬
     print(f"[데이터를 sub_df 단위로 쪼갰습니다. sub_df의 수 : {len(sub_dfs)}]")
-    done_index = util.get_done_index(keyword=f"{search_keyword}", folder_path="./text/temp_results")  # 작업했던 마지막 파일의 번호
+
+    # [0-3. text 임시파일 체크]
+    # temp_logs 임시파일 기준으로, 진행도를 체크한다.
+    done_index = util.get_done_index(keyword=f"{search_keyword}", folder_path="./text/temp_logs")  # 마지막으로 작업한 파일 번호
     print(f"[크롤링 진행도 : {(done_index+1)*chunk_size}/{url_row_count}]")
     print(f"[네이버 뉴스 text 크롤링을 시작하겠습니다] search_keyword : {search_keyword}")
     time.sleep(1)
