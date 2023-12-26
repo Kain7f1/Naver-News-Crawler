@@ -295,18 +295,39 @@ def save_text_temp_files(search_keyword, sub_df_index, sub_df_results, sub_df_lo
 
 
 ###############################################################
+# 기능 : temp_logs를 합친다 : 숫자 데이터를 합하여 계산
+def merge_text_temp_logs_sum(search_keyword):
+    log_files = util.read_files(
+        folder_path="./text/temp_logs",
+        keyword=f"_{search_keyword}",
+        endswith='.csv'
+    )
+    # 데이터를 하나로 병합한다
+    log_file_paths = []
+    for log_file in log_files:
+        log_file_paths.append(f"./text/temp_logs/{log_file}")
+    merged_df = util.sum_dataframes(log_file_paths, encoding='utf-8')    # int값은 더하여 logs를 합친다.
+
+    # 파일로 저장한다
+    logs_file_name = f"text_logs_sum_{search_keyword}"
+    save_file_path = f"./text/logs/{logs_file_name}.csv"
+    merged_df.to_csv(save_file_path, encoding='utf-8', index=False)   # 합친 df를 csv로 만든다
+
+
+###############################################################
 # 기능 : text 크롤러의 임시 파일을 하나로 합친다
 def merge_text_temp_files(search_keyword):
     # results
-    if not util.is_folder_empty(f"./text/temp_results"):
-        results_file_name = f"text_results_{search_keyword}"
-        util.merge_csv_files(save_file_name=results_file_name, read_folder_path_="./text/temp_results",
-                             save_folder_path_="./text/results", keyword=f"_{search_keyword}")
+    # if not util.is_folder_empty(f"./text/temp_results"):
+    #     results_file_name = f"text_results_{search_keyword}"
+    #     util.merge_csv_files(save_file_name=results_file_name, read_folder_path_="./text/temp_results",
+    #                          save_folder_path_="./text/results", keyword=f"_{search_keyword}")
     # logs
     if not util.is_folder_empty(f"./text/temp_logs"):
         logs_file_name = f"text_logs_{search_keyword}"
         util.merge_csv_files(save_file_name=logs_file_name, read_folder_path_="./text/temp_logs",
                              save_folder_path_="./text/logs", keyword=f"_{search_keyword}")
+        merge_text_temp_logs_sum(search_keyword)
     # errors
     if not util.is_folder_empty(f"./text/temp_errors"):
         errors_file_name = f"text_errors_{search_keyword}"
