@@ -6,6 +6,9 @@ import pandas as pd
 import time
 import traceback
 
+# 전역변수 SHUNK_SIZE : crawl_text() 에서 데이터를 끊을 단위
+CHUNK_SIZE = 1000
+
 
 ####################################################
 # crawl_url()
@@ -91,16 +94,10 @@ def crawl_url_recursion(search_keyword, start_date, end_date):
 
 
 #################################
-
-def crawl_text(search_keyword, chunk_size=1000):
+def crawl_text(search_keyword, chunk_size=CHUNK_SIZE):
     # [0-1. 설정값, 폴더 만들기]
     crawler_type = "naver_news_text_crawler"
-    util.create_folder(f"./text/temp_results")
-    util.create_folder(f"./text/temp_logs")
-    util.create_folder(f"./text/temp_errors")
-    util.create_folder(f"./text/results")
-    util.create_folder(f"./text/logs")
-    util.create_folder(f"./text/errors")
+    cr.create_text_folder()
 
     # [0-2. url results 파일 체크]
     url_files = util.read_files(folder_path=f"./url/results", keyword=f"_{search_keyword}_")  # 폴더 내 파일 있는지 확인
@@ -158,8 +155,62 @@ def crawl_text(search_keyword, chunk_size=1000):
     print(f"[크롤링 종료] {search_keyword}")
 
 
+###########################################
 def crawl_text_recursion(search_keyword):
     try:
         crawl_text(search_keyword)
     except Exception:
         crawl_text_recursion(search_keyword)
+
+
+#################################################
+# sub_df 인덱스를 지정하여, 그 부분한 크롤링한다
+# 크롤링 결과 데이터가 불완전활 때, 그 부분만 수동으로 크롤링하는 함수이다
+def crawl_text_specifying_index(search_keyword, index_list, chunk_size=CHUNK_SIZE):
+    # [0-1. 설정값, 폴더 만들기]
+    crawler_type = "naver_news_text_crawler"
+    cr.create_text_folder()
+
+    # [0-2. url results 파일 체크]
+    url_files = util.read_files(folder_path=f"./url/results", keyword=f"_{search_keyword}_")  # 폴더 내 파일 있는지 확인
+    if len(url_files) == 0:
+        return "입력 키워드에 맞는 파일이 존재하지 않습니다"
+    url_file_name = url_files[0]  # 키워드가 포함된 첫번째 파일 이름
+    print(f"[사용할 파일 명 : {url_file_name}]")
+    df_url = pd.read_csv(filepath_or_buffer=f"./url/results/{url_file_name}", encoding="utf-8")  # 파일을 df로 읽어오기
+    url_row_count = len(df_url)
+    if url_row_count == 0:
+        return "url 파일에 저장된 데이터가 없습니다"
+    sub_dfs = util.split_df_into_sub_dfs(df_url, chunk_size=chunk_size)  # df를 chunk_size 단위로 쪼갬
+    print(f"[데이터를 sub_df 단위로 쪼갰습니다. sub_df의 수 : {len(sub_dfs)}]")
+
+    # [0-3. text 임시파일 체크]
+    # temp_logs 임시파일 기준으로, 진행도를 체크한다.
+    print(f"[네이버 뉴스 text 크롤링을 시작하겠습니다] search_keyword : {search_keyword}")
+    time.sleep(1)
+
+    # [1. text 크롤링 : sub_dfs 단위로]
+    for sub_df_index in index_list:
+        crawling_start_time = datetime.now().replace(microsecond=0)  # 시작 시각 : 실행 시간을 잴 때 사용
+        sub_df = sub_dfs[sub_df_index]  # 작업할 단위 설정 : sub_df
+        sub_df_results = []  # 데이터를 저장할 공간 : sub_df_results
+        sub_df_errors = []  # 에러 정보를 저장할 공간 : sub_df_errors
+        for index, url_row in sub_df.iterrows():
+            # [sub_df에서, url_row 1개씩 읽어온다]
+            try:
+                print(f"[{sub_df_index * chunk_size + index + 1}/{url_row_count}] 본문 페이지 : {url_row['url']}")
+                soup = cr.get_soup(url_row['url'])  # url을 Beatifulsoup를 사용하여 읽어온다
+                new_row = cr.get_news_row(url_row, soup)  # 본문 정보 크롤링
+                sub_df_results.append(new_row)  # sub_df_results에 크롤링한 정보 저장
+                print("- 본문 정보를 추가했습니다 : ", new_row[-2])
+            except Exception as e:
+                print("[에러 발생 : 1-1. news text 받아오기]", e)
+                error_info = traceback.format_exc()
+                sub_df_errors.append([crawler_type, url_row['created_date'], error_info, url_row['url']])
+        # logs 정보 저장
+        crawling_end_time = datetime.now().replace(microsecond=0)  # 종료 시각
+        crawling_duration = round((crawling_end_time - crawling_start_time).total_seconds())  # 크롤링에 걸린 시간
+        sub_df_logs = [[crawler_type, search_keyword, len(sub_df_results), len(sub_df_errors), crawling_duration]]
+
+        # [1-2. 임시 파일 저장]
+        cr.save_text_temp_files(search_keyword, sub_df_index, sub_df_results, sub_df_logs, sub_df_errors)
