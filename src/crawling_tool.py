@@ -318,10 +318,10 @@ def merge_text_temp_logs_sum(search_keyword):
 # 기능 : text 크롤러의 임시 파일을 하나로 합친다
 def merge_text_temp_files(search_keyword):
     # results
-    # if not util.is_folder_empty(f"./text/temp_results"):
-    #     results_file_name = f"text_results_{search_keyword}"
-    #     util.merge_csv_files(save_file_name=results_file_name, read_folder_path_="./text/temp_results",
-    #                          save_folder_path_="./text/results", keyword=f"_{search_keyword}")
+    if not util.is_folder_empty(f"./text/temp_results"):
+        results_file_name = f"text_results_{search_keyword}"
+        util.merge_csv_files(save_file_name=results_file_name, read_folder_path_="./text/temp_results",
+                             save_folder_path_="./text/results", keyword=f"_{search_keyword}")
     # logs
     if not util.is_folder_empty(f"./text/temp_logs"):
         logs_file_name = f"text_logs_{search_keyword}"
