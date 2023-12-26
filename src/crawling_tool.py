@@ -6,6 +6,7 @@ import utility_module as util
 import pandas as pd
 import requests
 import time
+import os
 
 
 #############################################################################
@@ -279,18 +280,18 @@ def save_text_temp_files(search_keyword, sub_df_index, sub_df_results, sub_df_lo
     df_temp_results = pd.DataFrame(sub_df_results, columns=results_columns)
     temp_results_path = (f"./text/temp_results/"
                          f"{temp_results_index}_temp_results_{search_keyword}.csv")  # temp 파일 경로
-    df_temp_results.to_csv(temp_results_path, encoding='utf-8', index=False)  # temp 파일 저장
+    df_temp_results.to_csv(temp_results_path, encoding='utf-8', index=False, errors='replace')  # temp 파일 저장
     # [임시 logs 저장]
     df_temp_logs = pd.DataFrame(sub_df_logs, columns=logs_columns)
     temp_errors_path = (f"./text/temp_logs/"
                         f"{temp_results_index}_temp_logs_{search_keyword}.csv")  # temp logs 경로
-    df_temp_logs.to_csv(temp_errors_path, encoding='utf-8', index=False)  # temp logs 저장
+    df_temp_logs.to_csv(temp_errors_path, encoding='utf-8', index=False, errors='replace')  # temp logs 저장
     # [임시 errors 저장] (에러가 존재하는 경우에만)
     if len(sub_df_errors) > 0:
         df_temp_errors = pd.DataFrame(sub_df_errors, columns=errors_columns)
         temp_errors_path = (f"./text/temp_errors/"
                             f"{temp_results_index}_temp_errors_{search_keyword}.csv")  # temp errors 경로
-        df_temp_errors.to_csv(temp_errors_path, encoding='utf-8', index=False)  # temp errors 저장
+        df_temp_errors.to_csv(temp_errors_path, encoding='utf-8', index=False, errors='replace')  # temp errors 저장
 
 
 ###############################################################
@@ -311,3 +312,41 @@ def merge_text_temp_files(search_keyword):
         errors_file_name = f"text_errors_{search_keyword}"
         util.merge_csv_files(save_file_name=errors_file_name, read_folder_path_="./text/temp_errors",
                              save_folder_path_="./text/errors", keyword=f"_{search_keyword}")
+
+
+############################
+def create_text_folder():
+    util.create_folder(f"./text/temp_results")
+    util.create_folder(f"./text/temp_logs")
+    util.create_folder(f"./text/temp_errors")
+    util.create_folder(f"./text/results")
+    util.create_folder(f"./text/logs")
+    util.create_folder(f"./text/errors")
+
+
+###############################################
+# temp_results 폴더에서, 결손된 데이터가 존재하는 파일 이름을 리턴한다
+def find_different_chunk_size(folder_path, chunk_size=1000):
+    # 주어진 폴더 내의 모든 파일을 탐색
+    files = os.listdir(folder_path)
+    # 길이가 1000이 아닌 파일 이름을 저장할 리스트
+    different_chunk_size_index = []
+
+    len_files = len(files)
+    for index, file in enumerate(files):
+        print(f"{index} / {len_files}")
+        if index == len_files-1:
+            break
+        # 파일 확장자가 .csv인 경우에만 처리
+        if file.endswith('.csv'):
+            file_path = os.path.join(folder_path, file)
+            try:
+                # CSV 파일을 DataFrame으로 읽기
+                df = pd.read_csv(file_path)
+                # DataFrame 길이 확인
+                if len(df) != chunk_size:
+                    different_chunk_size_index.append(file[:6])
+            except Exception as e:
+                print(f"Error reading {file}: {e}")
+
+    return different_chunk_size_index
