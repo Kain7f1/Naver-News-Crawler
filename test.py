@@ -4,7 +4,7 @@ import crawling_tool as cr
 
 ##########
 search_keyword = "금리"
-cr.merge_text_temp_files(search_keyword)
+# cr.merge_text_temp_files(search_keyword)
 
 #######################
 # 합치기
@@ -24,3 +24,7 @@ cr.merge_text_temp_files(search_keyword)
 # # 수동 크롤링
 # index_list = [61, 364, 551, 585, 658, 680, 793, 796, 804, 851, 852, 864]
 # crawl_text_specifying_index(search_keyword, index_list)
+
+##############################################
+
+
