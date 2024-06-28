@@ -8,10 +8,10 @@ import re
 
 ##########################################
 # 기능 : 한글 문자열을 유니코드 UTF-8로 인코딩하여 반환합니다
-# 입력 예시 : '에스엠'
-# 리턴값 예시 : '.EC.97.90.EC.8A.A4.EC.97.A0'
+# 입력 예시 : '축구'
+# 리턴값 예시 : '%EC%B6%95%EA%B5%'
 def convert_to_unicode(input_str):
-    return '.' + '.'.join(['{:02X}'.format(byte) for byte in input_str.encode('utf-8')])
+    return '%' + '%'.join(['{:02X}'.format(byte) for byte in input_str.encode('utf-8')])
 
 
 #####################################
